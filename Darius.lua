@@ -1,3 +1,5 @@
+if myHero.charName ~= "Darius" then return end
+
 ----- Credit everyone else for updater -----
 
 local version = "0.1"
