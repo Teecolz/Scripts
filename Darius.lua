@@ -25,7 +25,7 @@ function OnLoad()
   Menu = scriptConfig("Darius by Tyler", "DariusCombo")
   Orbwalker = SOW(VP)
            
-  Menu:addSubMenu("Darius - Orbwalker", "SOWorb")
+  Menu:addSubMenu("[Darius - Orbwalker]", "SOWorb")
   Orbwalker:LoadToMenu(Menu.SOWorb)
   
   Menu:addTS(ts)
@@ -63,13 +63,17 @@ function OnTick()
   Target = ts.target
   ts:SetPrediction(Espeed)
   Killsteal()
-
-  if ValidTarget(ts.target, 425) and QREADY and Menu.Harass.autoQ then
-    CastSpell(_Q)
-  end
+  AutoQ()
   
   if Menu.DariusCombo.combo then 
     combo() 
+  end
+end
+
+function AutoQ()
+
+  if ValidTarget(ts.target, 425) and QREADY and Menu.Harass.autoQ then
+    CastSpell(_Q)
   end
 end
 
