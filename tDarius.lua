@@ -2,7 +2,7 @@ if myHero.charName ~= "Darius" then return end
 
 --[[Credit everyone else for Auto updater]]
 
-local version = "0.3"
+local version = "0.4"
 local author = "Teecolz"
 local scriptName = "tDarius"
 local AUTOUPDATE = true
@@ -58,7 +58,7 @@ function OnLoad()
   ts = TargetSelector(TARGET_LESS_CAST, 2000)
   VP = VPrediction()
   
-  Menu = scriptConfig("Darius by Tyler", "DariusCombo")
+  Menu = scriptConfig("tDarius by Teecolz", "DariusCombo")
   Orbwalker = SOW(VP)
            
   Menu:addSubMenu("[Darius - Orbwalker]", "SOWorb")
@@ -132,9 +132,9 @@ function combo()
 end
 
 function UseQ()
+
   if target ~= nil and ValidTarget(target, Qrange) and QREADY then
     CastSpell(_Q)
-    
   end
 end
 
@@ -142,15 +142,13 @@ function UseW()
 
   if target ~= nil and ValidTarget(target, 500) and WREADY then
     CastSpell(_W)
-    
   end
 end
 
 function UseE()
   
-  if target ~= nil and ValidTarget(target, 540) and EREADY then
-    CastSpell(_E, target)
-
+  if ValidTarget(target, 540) and EREADY then
+    CastSpell(_E, target.x, target.z)
   end
 end
 
@@ -168,7 +166,7 @@ function UseR()
       end
 
       local rDmg = multiplier * getDmg("R", target, myHero)
-      if RREADY and target ~= nil and target.health <= rDmg and GetDistance(target) <= 460 and not target.dead and Menu.DariusCombo.comboR then
+      if RREADY and target.health <= rDmg and GetDistance(target) <= 460 then
         CastSpell(_R, target)
       end
    end
@@ -240,7 +238,7 @@ function OnGainBuff(unit, buff)
           if enemy.name == unit.name then
               enemy.stack = 1
           end
-    end
+      end
   end
 end
 
@@ -250,7 +248,7 @@ function OnLoseBuff(unit, buff)
           if enemy.name == unit.name then
               enemy.stack = 0
           end
-    end
+   end
   end
 end
 
@@ -259,7 +257,7 @@ function OnUpdateBuff(unit, buff)
     for i, enemy in pairs(enemyTable) do
          if enemy.name == unit.name then
               enemy.stack = buff.stack
-          end
+         end
     end
   end
 end
