@@ -1,17 +1,19 @@
 if myHero.charName ~= "Darius" then return end
 
+--[[Credit everyone else for Auto updater]]
+
 local version = "0.3"
 local author = "Teecolz"
-local scriptName = "Darius"
+local scriptName = "tDarius"
 local AUTOUPDATE = true
 local UPDATE_HOST = "raw.github.com"
-local UPDATE_PATH = "/Teecolz/Scripts/master/Darius.lua".."?rand="..math.random(1,10000)
-local UPDATE_FILE_PATH = SCRIPT_PATH.."Darius.lua"
+local UPDATE_PATH = "/Teecolz/Scripts/master/tDarius.lua".."?rand="..math.random(1,10000)
+local UPDATE_FILE_PATH = SCRIPT_PATH.."tDarius.lua"
 local UPDATE_URL = "https://"..UPDATE_HOST..UPDATE_PATH
 
 function AutoupdaterMsg(msg) print("<font color='#5F9EA0'><b>[".. scriptName .."] </font><font color='#cffffffff'> "..msg..".</font>") end
   if AUTOUPDATE then
-    local ServerData = GetWebResult(UPDATE_HOST, "/Teecolz/Scripts/master/Darius.version")
+    local ServerData = GetWebResult(UPDATE_HOST, "/Teecolz/Scripts/master/tDarius.version")
     if ServerData then
       ServerVersion = type(tonumber(ServerData)) == "number" and tonumber(ServerData) or nil
         if ServerVersion then
@@ -33,7 +35,7 @@ if myHero.charName ~= "Darius" then return end
 require 'SOW'
 require 'VPrediction'
 
-  PrintChat("Loaded Darius by Teecolz")
+  PrintChat("Loaded tDarius by Teecolz")
 
 local ts
 local VP = nil
