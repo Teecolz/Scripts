@@ -17,10 +17,8 @@ local RREADY = (myHero:CanUseSpell(_R) == READY)
   
 local QReady, WReady, EReady, RReady = false, false, false, false
 
-local MyBasicRange = 7
-
 function OnLoad()
-  ts = TargetSelector(TARGET_LESS_CAST, 1200)
+  ts = TargetSelector(TARGET_LESS_CAST, 1100)
   VP = VPrediction()
   
   Menu = scriptConfig("Leona by Tyler", "LeonaCombo")
@@ -56,16 +54,6 @@ function OnTick()
   if Menu.LeonaCombo.combo then combo() end
 end
   
---[[function OnDraw()
-  if not myHero.dead then
-      if Menu.draw.drawE and EREADY then
-          DrawCircle(myHero.x, myHero.y, myHero.z, Erange, 0x111111)
-      end
-      if Menu.draw.drawR and RREADY then
-          DrawCircle(myHero.x, myHero.y, myHero.z, Rrange, 0x111111)
-      end
-  end
-end]]
 function OnDraw()
 
     if Menu.drawings.drawCircleE then
@@ -106,36 +94,10 @@ function UseE()
         end
     end
 end
-  
-  --[[if ts.target ~= nil then distancetstarget = GetDistance(ts.target) end
-  
-  if EREADY and Menu.LeonaCombo.comboE and ts.target ~= nil and ValidTarget(ts.target, 875) then
-    CastSpell(_E, ts.nextPosition.x, ts.nextPosition.z)
-  end]]
-    
-  --[[if ts.target ~= nil and ValidTarget(ts.target, 875) and Menu.LeonaCombo.comboE then
-    local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(ts.target, erange, ewidth, espeed, edelay, myHero, true)
-    if GetDistance(ts.target) <= erange and myHero:CanUseSpell(_E) == READY then 
-      CastSpell(_E, CastPosition.x, CastPosition.z)
-    end]]
-    
-  --[[end
-  
-  if WREADY and Menu.LeonaCombo.comboW and ts.target ~= nil and ValidTarget(ts.target, 400) then
-     CastSpell(_W)
-  end 
-  
-  if ts.target ~= nil and ValidTarget(ts.target, 175) then
-    if QREADY then
-      CastSpell(_Q)
+
+function UseR()
+
+    if ValidTarget(ts.target, Rrange) and CountEnemyHeroInRange(1100) >= Menu.LeonaCombo.minR and RREADY then
+      CastSpell(_R, ts.target.visionPos.x, ts.target.visionPos.z)
     end
-  end
-end]]
-
---[[ could also try this: 
-  if Menu.Draw.W and WREADY then DrawCircle(myHero.x,myHero.y,myHero.z,Tryndamere.W["range"],0x00FFFF) end
-  if Menu.Draw.E and EREADY then DrawCircle(myHero.x,myHero.y,myHero.z,Tryndamere.E["range"],0x00FFFF) end
 end
-
-    ]]
-
