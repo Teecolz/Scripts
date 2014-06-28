@@ -2,7 +2,7 @@ if myHero.charName ~= "Leona" then return end
 
 --[[Credit everyone else for Auto updater]]
 
-local version = "0.2"
+local version = "0.3"
 local author = "Teecolz"
 local scriptName = "tLeona"
 local AUTOUPDATE = true
@@ -112,10 +112,10 @@ end
 
 function combo()
 
-  if Menu.LeonaCombo.comboQ then UseQ() end
-  if Menu.LeonaCombo.comboW then UseW() end
-  if Menu.LeonaCombo.comboE then UseE() end
-  if Menu.LeonaCombo.comboR then UseR() end
+  if Menu.LeonaCombo.comboQ and QREADY then UseQ() end
+  if Menu.LeonaCombo.comboW and WREADY then UseW() end
+  if Menu.LeonaCombo.comboE and EREADY then UseE() end
+  if Menu.LeonaCombo.comboR and RREADY then UseR() end
   
 end
 
@@ -132,9 +132,9 @@ function UseW()
 end
 
 function UseE()
-    if target ~= nil and ValidTarget(target, 875) and EREADY then
+    if ValidTarget(target, 875) and EREADY then
         for i, target in pairs(GetEnemyHeroes()) do
-         local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(target, 875, 85, 2000, 0.25, myHero, false)
+         local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(target, 875, 85, 2000, 0.25)
         if HitChance >= 2 and GetDistance(CastPosition) < 875 then
             CastSpell(_E, CastPosition.x, CastPosition.z)
             end
@@ -145,8 +145,8 @@ end
 function UseR()
 
     if target ~= nil and ValidTarget(target, 1200) and RREADY then
-      local CastPosition, HitChance = VP:GetCircularAOECastPosition(target, .25, 300, 1200, 20, myHero, false)
-      if CastPosition ~= nil and GetDistance(CastPosition) < 1200 and HitChance >= 2 and Menu.LeonaCombo.comboR then
+      local CastPosition, Hitchance = VP:GetCircularAOECastPosition(target, .25, 300, 1200, 20)
+      if CastPosition ~= nil and GetDistance(CastPosition) <= 1200 and Hitchance >= 2 and Menu.LeonaCombo.comboR then
         CastSpell(_R, CastPosition.x, CastPosition.z)
       end
     end
@@ -154,8 +154,8 @@ end
 
 function AutoUlt()
 
-  if target ~= nil and ValidTarget(target, 1200) and Menu.LeonaCombo.autoult and RREADY then
-    local CastPosition, nTargets = VP:GetCircularAOECastPosition(target, .25, 300, 1200, 20, myHero, false)
+  if target ~= nil and ValidTarget(1200) and Menu.LeonaCombo.autoult and RREADY then
+    local CastPosition, nTargets = VP:GetCircularAOECastPosition(target, .25, 300, 1200, 20)
     if CastPosition ~= nil and GetDistance(CastPosition) <= 1200 and nTargets and nTargets >= Menu.LeonaCombo.minR then
           CastSpell(_R, CastPosition.x, CastPosition.z)
     end
