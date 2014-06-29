@@ -2,7 +2,7 @@ if myHero.charName ~= "Darius" then return end
 
 --[[Credit everyone else for Auto updater]]
 
-local version = "1.11"
+local version = "1.2"
 local author = "Teecolz"
 local scriptName = "tDarius"
 local AUTOUPDATE = true
@@ -38,6 +38,7 @@ require 'VPrediction'
   PrintChat("Loaded tDarius by Teecolz")
 
 local ts
+local target
 local VP = nil
 local enemyTable = {}
 local QREADY = (myHero:CanUseSpell(_Q) == READY)
@@ -55,7 +56,7 @@ local abilitySequence = {1, 3, 1, 2, 1, 4, 1, 2, 1, 2, 4, 2, 3, 2, 3, 4, 3, 3}
 
 function OnLoad()
 
-  ts = TargetSelector(TARGET_LESS_CAST, 2000, DAMAGE_PHYSICAL)
+  ts = TargetSelector(TARGET_LESS_CAST, 540, DAMAGE_PHYSICAL)
   VP = VPrediction()
   SOWi = SOW(VP)
   
@@ -86,12 +87,19 @@ function OnLoad()
   Menu.Ads:addParam("Killsteal", "Killsteal with Q", SCRIPT_PARAM_ONOFF, false)
   Menu.Ads:addParam("debug", "Debug", SCRIPT_PARAM_ONOFF, false)
   
+  -- Credit Feez :)
+  
   for i, enemy in pairs(GetEnemyHeroes()) do
-    if enemy then enemy.stack = 0
-        table.insert(enemyTable, enemy)
+    if enemy then 
+        local a = {}
+        a.object = enemy
+        a.stack = 0
+        table.insert(enemyTable, a)
     end
   end
 end
+
+-- End Credit Feez :)
 
 function OnTick()
 
@@ -117,7 +125,7 @@ end
 
 function AutoQ()
 
-  if ValidTarget(target, 425) and QREADY and Menu.Harass.autoQ then
+  if target and GetDistanceSqr(target) < 180625 and QREADY and Menu.Harass.autoQ then
       CastSpell(_Q)
   end
 end
@@ -133,44 +141,38 @@ end
 
 function UseQ()
 
-  if ValidTarget(target, Qrange) and QREADY then
+  if target and GetDistanceSqr(target) < 180625 and QREADY then
       CastSpell(_Q)
   end
 end
 
 function UseW()
 
-  if ValidTarget(target, 500) and WREADY then
+  if target and GetDistanceSqr(target) < 21025 and WREADY then
       CastSpell(_W)
   end
 end
 
 function UseE()
   
-  if ValidTarget(target, 540) and EREADY then
+  if target and GetDistanceSqr(target) < 291600 and EREADY then
       CastSpell(_E, target.x, target.z)
   end
 end
 
 function UseR()
 
-   for i=1, heroManager.iCount do
-      local target = heroManager:GetHero(i)
-      local multiplier = 1
-      if GetDistance(target) < 550 then
-               for i, enemy in pairs(enemyTable) do
-            if enemy.name == target.name then
-                multiplier = GetMultiplier(enemy.stack)
-            end
-        end
-      end
-
-      local rDmg = multiplier * getDmg("R", target, myHero)
-      if RREADY and target.health <= rDmg and GetDistance(target) <= 460 then
-        CastSpell(_R, target)
+ if RREADY then
+   for i, enemy in ipairs(enemyTable) do
+      if enemy.object == target and GetDistanceSqr(target) < 302500 then
+          local multiplier = GetMultiplier(enemy.stack)
+          local rDmg = multiplier * getDmg("R", target, myHero)
+          if target.health < rDmg then
+            CastSpell(_R, target)
+          end
       end
    end
-  
+  end
 end
 
 function Killsteal()
@@ -179,7 +181,7 @@ function Killsteal()
             local target = heroManager:GetHero(i)
             qDmg = getDmg("Q", target, myHero) or 0
         
-            if ValidTarget(target) and GetDistance(target) <= 425 and QREADY and target.health <= qDmg then
+            if ValidTarget(target) and GetDistanceSqr(target) <= 180625 and QREADY and target.health <= qDmg then
                 CastSpell(_Q)
             end
         end
@@ -225,7 +227,7 @@ function AutoLevel()
     end
 end
 
---[[ Credit Trees & Fuggi]]
+--[[ Credit Trees, Fuggi, and mostly Feez]]
 
 function GetMultiplier(stack)
 
@@ -236,7 +238,7 @@ end
 function OnGainBuff(unit, buff)
   if unit and unit.team ~= myHero.team and buff.name == "dariushemo" then
       for i, enemy in pairs(enemyTable) do
-          if enemy.name == unit.name then
+          if enemy.object.name == unit.name then
               enemy.stack = 1
           end
       end
@@ -247,7 +249,7 @@ end
 function OnLoseBuff(unit, buff)
   if buff.name == "dariushemo" then
    for i, enemy in pairs(enemyTable) do
-          if enemy.name == unit.name then
+          if enemy.object.name == unit.name then
               enemy.stack = 0
           end
    end
@@ -257,13 +259,13 @@ end
 function OnUpdateBuff(unit, buff)
   if buff.name == "dariushemo" then
     for i, enemy in pairs(enemyTable) do
-         if enemy.name == unit.name then
+         if enemy.object.name == unit.name then
               enemy.stack = buff.stack
          end
     end
   end
 end
--- [[End Credit Trees & Fuggi]]
+-- [[End Credit Trees, Fuggi, and Feez]]
 
 function OnDraw()
 
