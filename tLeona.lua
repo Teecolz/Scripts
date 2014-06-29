@@ -2,7 +2,7 @@ if myHero.charName ~= "Leona" then return end
 
 --[[Credit everyone else for Auto updater]]
 
-local version = "0.3"
+local version = "1.0"
 local author = "Teecolz"
 local scriptName = "tLeona"
 local AUTOUPDATE = true
@@ -36,7 +36,7 @@ require 'SOW'
 require 'VPrediction'
 
 local ts
-local target = nil
+local target
 local VP = nil
 local Qrange, Qwidth, Qspeed, Qdelay = 215, 1, 7777, 0.01
 local Wrange, Wwidth, Wspeed, Wdelay = 1, 500, 1, 3 
@@ -48,21 +48,20 @@ local EREADY = (myHero:CanUseSpell(_E) == READY)
 local RREADY = (myHero:CanUseSpell(_R) == READY)
 local abilitySequence = {3, 1, 2, 2, 2, 4, 2, 1, 2, 1, 4, 1, 1, 3, 3, 4, 3, 3} 
 local qOff, wOff, eOff, rOff = 0,0,0,0
-  
 local QReady, WReady, EReady, RReady = false, false, false, false
 
 function OnLoad()
   ts = TargetSelector(TARGET_LESS_CAST_PRIORITY, 1200, DAMAGE_MAGIC)
   VP = VPrediction()
   
-  Menu = scriptConfig("Leona by Tyler", "LeonaCombo")
-  Orbwalker = SOW(VP)
+  Menu = scriptConfig("tLeona by Teecolz", "LeonaCombo")
+  SOWi = SOW(VP)
            
   Menu:addSubMenu("[Leona - Orbwalker]", "SOWorb")
-  Orbwalker:LoadToMenu(Menu.SOWorb)
+  SOWi:LoadToMenu(Menu.SOWorb)
   
   Menu:addTS(ts)
-  ts.name = "Focus"
+  ts.name = "Leona"
      
   Menu:addSubMenu("[Leona - Combo]", "LeonaCombo")
   Menu.LeonaCombo:addParam("combo", "Combo mode", SCRIPT_PARAM_ONKEYDOWN, false, 32)
@@ -73,6 +72,12 @@ function OnLoad()
   Menu.LeonaCombo:addParam("autoult", "Auto Use Ultimate", SCRIPT_PARAM_ONOFF, false)
   Menu.LeonaCombo:addParam("minR", "Minimum Enemies to Cast R on", SCRIPT_PARAM_SLICE, 3, 1, 5, 0)
      
+  Menu:addSubMenu("[Leona - Harass]", "Harass")
+  Menu.Harass:addParam("harass", "Harass", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("C"))
+  Menu.Harass:addParam("harassQ", "Use Q in Harass", SCRIPT_PARAM_ONOFF, true)
+  Menu.Harass:addParam("harassW", "Use W in Harass", SCRIPT_PARAM_ONOFF, true)
+  Menu.Harass:addParam("harassE", "Use E in Harass", SCRIPT_PARAM_ONOFF, true)
+     
   Menu:addSubMenu("[Drawing]", "drawings")
   Menu.drawings:addParam("drawCircleE", "Draw E Range", SCRIPT_PARAM_ONOFF, true)
   Menu.drawings:addParam("drawCircleR", "Draw R Range", SCRIPT_PARAM_ONOFF, true)
@@ -81,13 +86,12 @@ function OnLoad()
   Menu.Ads:addParam("AutoLevelspells", "Auto Level Spells", SCRIPT_PARAM_ONOFF, true)
   
   
-  PrintChat("Loaded Leona by Tyler")
+  PrintChat("Loaded tLeona by Teecolz")
 end
 
 function OnTick()
   ts:update()
   target = ts.target
-  ts:SetPrediction(2000)
   
   if Menu.Ads.AutoLevelspells then 
     AutoLevel()
@@ -95,7 +99,9 @@ function OnTick()
   
   if Menu.LeonaCombo.combo then combo() end
   
-  AutoUlt()
+  if Menu.Harass.harass then Harass() end
+  
+  if RREADY and Menu.LeonaCombo.autoult then AutoUlt() end
   
 end
   
@@ -111,7 +117,6 @@ function OnDraw()
 end
 
 function combo()
-
   if Menu.LeonaCombo.comboQ and QREADY then UseQ() end
   if Menu.LeonaCombo.comboW and WREADY then UseW() end
   if Menu.LeonaCombo.comboE and EREADY then UseE() end
@@ -119,45 +124,51 @@ function combo()
   
 end
 
+function Harass()
+
+  if Menu.Harass.harassQ and QREADY then UseQ() end 
+  if Menu.Harass.harassW and WREADY then UseW() end 
+  if Menu.Harass.harassE and EREADY then UseE() end 
+  
+end
+
 function UseQ()
-  if target ~= nil and ValidTarget(target, 175) then
+  if target and GetDistance(target) <= 155 then
     CastSpell(_Q)
   end
 end
 
 function UseW()
-  if target ~= nil and ValidTarget(target, 275) then
+  if target and GetDistance(target) <= 275 then
     CastSpell(_W)
   end
 end
 
 function UseE()
-    if ValidTarget(target, 875) and EREADY then
+    if target and GetDistanceSqr(target) <= 765625 then
         for i, target in pairs(GetEnemyHeroes()) do
-         local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(target, 875, 85, 2000, 0.25)
-        if HitChance >= 2 and GetDistance(CastPosition) < 875 then
+        local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(target, 875, 85, 2000, 0.25, myHero, false)
+          if HitChance > 1 and GetDistance(CastPosition) <= 875 then
             CastSpell(_E, CastPosition.x, CastPosition.z)
-            end
+          end
         end
     end
 end
 
 function UseR()
-
-    if target ~= nil and ValidTarget(target, 1200) and RREADY then
-      local CastPosition, Hitchance = VP:GetCircularAOECastPosition(target, .25, 300, 1200, 20)
-      if CastPosition ~= nil and GetDistance(CastPosition) <= 1200 and Hitchance >= 2 and Menu.LeonaCombo.comboR then
-        CastSpell(_R, CastPosition.x, CastPosition.z)
+    if target and GetDistanceSqr(target) <= 1440000 then
+      local AOECastPosition, MainTargetHitChance, nTargets = VP:GetCircularAOECastPosition(target, 0.25, 300, 1200, 20, myHero, false)
+      if GetDistance(AOECastPosition) <= 1200 and MainTargetHitChance > 1 then
+        CastSpell(_R, AOECastPosition.x, AOECastPosition.z)
       end
     end
 end
 
 function AutoUlt()
-
-  if target ~= nil and ValidTarget(1200) and Menu.LeonaCombo.autoult and RREADY then
-    local CastPosition, nTargets = VP:GetCircularAOECastPosition(target, .25, 300, 1200, 20)
-    if CastPosition ~= nil and GetDistance(CastPosition) <= 1200 and nTargets and nTargets >= Menu.LeonaCombo.minR then
-          CastSpell(_R, CastPosition.x, CastPosition.z)
+  if target and GetDistanceSqr(target) <= 1440000 then
+    local AOECastPosition, MainTargetHitChance, nTargets = VP:GetCircularAOECastPosition(target, 0.25, 300, 1200, 20, myHero, false)
+    if GetDistance(AOECastPosition) <= 1200 and nTargets >= Menu.LeonaCombo.minR and MainTargetHitChance > 1 then
+          CastSpell(_R, AOECastPosition.x, AOECastPosition.z)
     end
   end
 end
