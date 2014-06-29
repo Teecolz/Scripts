@@ -2,7 +2,7 @@ if myHero.charName ~= "Darius" then return end
 
 --[[Credit everyone else for Auto updater]]
 
-local version = "1.1"
+local version = "1.11"
 local author = "Teecolz"
 local scriptName = "tDarius"
 local AUTOUPDATE = true
@@ -84,16 +84,12 @@ function OnLoad()
   Menu:addSubMenu("[Darius - Additionals]", "Ads")
   Menu.Ads:addParam("AutoLevelspells", "Auto-Level Spells", SCRIPT_PARAM_ONOFF, false)
   Menu.Ads:addParam("Killsteal", "Killsteal with Q", SCRIPT_PARAM_ONOFF, false)
+  Menu.Ads:addParam("debug", "Debug", SCRIPT_PARAM_ONOFF, false)
   
-  Menu:addParam("Version: 0.1", "version")
-  Menu:addParam("Author: Teecolz", "author")
-  
-  for i=0, heroManager.iCount, 1 do
-        local enemy = heroManager:GetHero(i)
-        if enemy and enemy.team ~= myHero.team then
-                enemy.stack = 0
-                table.insert(enemyTable, enemy)
-        end
+  for i, enemy in pairs(GetEnemyHeroes()) do
+    if enemy then enemy.stack = 0
+        table.insert(enemyTable, enemy)
+    end
   end
 end
 
@@ -113,12 +109,16 @@ function OnTick()
   if Menu.DariusCombo.combo then 
     combo() 
   end
+  
+  if Menu.DariusCombo.comboR then
+    UseR()
+   end
 end
 
 function AutoQ()
 
   if ValidTarget(target, 425) and QREADY and Menu.Harass.autoQ then
-    CastSpell(_Q)
+      CastSpell(_Q)
   end
 end
 
@@ -133,22 +133,22 @@ end
 
 function UseQ()
 
-  if target ~= nil and ValidTarget(target, Qrange) and QREADY then
-    CastSpell(_Q)
+  if ValidTarget(target, Qrange) and QREADY then
+      CastSpell(_Q)
   end
 end
 
 function UseW()
 
-  if target ~= nil and ValidTarget(target, 500) and WREADY then
-    CastSpell(_W)
+  if ValidTarget(target, 500) and WREADY then
+      CastSpell(_W)
   end
 end
 
 function UseE()
   
   if ValidTarget(target, 540) and EREADY then
-    CastSpell(_E, target.x, target.z)
+      CastSpell(_E, target.x, target.z)
   end
 end
 
@@ -158,7 +158,7 @@ function UseR()
       local target = heroManager:GetHero(i)
       local multiplier = 1
       if GetDistance(target) < 550 then
-        for i, enemy in pairs(enemyTable) do
+               for i, enemy in pairs(enemyTable) do
             if enemy.name == target.name then
                 multiplier = GetMultiplier(enemy.stack)
             end
@@ -226,9 +226,10 @@ function AutoLevel()
 end
 
 --[[ Credit Trees & Fuggi]]
-function GetMultiplier(stacks)
 
-  return 1 + stacks/5
+function GetMultiplier(stack)
+
+  return 1 + stack/5
  
 end
 
@@ -240,6 +241,7 @@ function OnGainBuff(unit, buff)
           end
       end
   end
+  if Menu.Ads.debug then print(enemyTable) end
 end
 
 function OnLoseBuff(unit, buff)
