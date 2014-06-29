@@ -2,7 +2,7 @@ if myHero.charName ~= "Darius" then return end
 
 --[[Credit everyone else for Auto updater]]
 
-local version = "1.2"
+local version = "1.3"
 local author = "Teecolz"
 local scriptName = "tDarius"
 local AUTOUPDATE = true
@@ -48,6 +48,9 @@ local RREADY = (myHero:CanUseSpell(_R) == READY)
 local Qrange = 425
 local Wrange = 145
 local Erange = 540
+local Eradius = 225
+local Espeed = 1500
+local Edelay = 0.5
 local Rrange = 460
 local Espeed = 1500
 local QReady, WReady, EReady, RReady = false, false, false, false
@@ -81,6 +84,7 @@ function OnLoad()
   Menu:addSubMenu("[Darius - Drawing]", "drawings")
   Menu.drawings:addParam("drawCircleE", "Draw E Range", SCRIPT_PARAM_ONOFF, true)
   Menu.drawings:addParam("drawCircleR", "Draw R Range", SCRIPT_PARAM_ONOFF, true)
+  Menu.drawings:addParam("drawCircleQ", "Draw Q Range", SCRIPT_PARAM_ONOFF, true)
   
   Menu:addSubMenu("[Darius - Additionals]", "Ads")
   Menu.Ads:addParam("AutoLevelspells", "Auto-Level Spells", SCRIPT_PARAM_ONOFF, false)
@@ -141,22 +145,25 @@ end
 
 function UseQ()
 
-  if target and GetDistanceSqr(target) < 180625 and QREADY then
+  if target and GetDistanceSqr(target) <= 180625 and QREADY then
       CastSpell(_Q)
   end
 end
 
 function UseW()
 
-  if target and GetDistanceSqr(target) < 21025 and WREADY then
+  if target and GetDistanceSqr(target) <= 21025 and WREADY then
       CastSpell(_W)
   end
 end
 
 function UseE()
   
-  if target and GetDistanceSqr(target) < 291600 and EREADY then
+  if target and GetDistanceSqr(target) <= 291600 and EREADY then
+    local AOECastPosition, MainTargetHitChance, nTargets = VP:GetLineAOECastPosition(target, Edelay, Eradius, Erange, Espeed, myHero, false)
+    if AOECastPosition ~= nil and nTargets >= 1 and GetDistance(AOECastPosition) <= Erange then
       CastSpell(_E, target.x, target.z)
+    end
   end
 end
 
@@ -167,7 +174,7 @@ function UseR()
       if enemy.object == target and GetDistanceSqr(target) < 302500 then
           local multiplier = GetMultiplier(enemy.stack)
           local rDmg = multiplier * getDmg("R", target, myHero)
-          if target.health < rDmg then
+          if target.health <= rDmg then
             CastSpell(_R, target)
           end
       end
@@ -274,10 +281,13 @@ function OnDraw()
      end
      
      if Menu.drawings.drawCircleE then 
-         DrawCircle(myHero.x, myHero.y, myHero.z, Erange, 0x111111)
+        DrawCircle(myHero.x, myHero.y, myHero.z, Erange, 0x111111)
      end
   
      if Menu.drawings.drawCircleR then
         DrawCircle(myHero.x, myHero.y, myHero.z, Rrange, 0x111111)
+     end
+     if Menu.drawings.drawCircleQ then
+        DrawCircle(myHero.x, myHero.y, myHero.z, Qrange, 0x111111)
      end
 end
