@@ -2,7 +2,7 @@ if myHero.charName ~= "Darius" then return end
 
 --[[Credit everyone else for Auto updater]]
 
-local version = "0.4"
+local version = "1.0"
 local author = "Teecolz"
 local scriptName = "tDarius"
 local AUTOUPDATE = true
