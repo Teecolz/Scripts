@@ -2,7 +2,7 @@ if myHero.charName ~= "Darius" then return end
 
 --[[Credit everyone else for Auto updater]]
 
-local version = "1.0"
+local version = "1.1"
 local author = "Teecolz"
 local scriptName = "tDarius"
 local AUTOUPDATE = true
@@ -55,17 +55,17 @@ local abilitySequence = {1, 3, 1, 2, 1, 4, 1, 2, 1, 2, 4, 2, 3, 2, 3, 4, 3, 3}
 
 function OnLoad()
 
-  ts = TargetSelector(TARGET_LESS_CAST, 2000)
+  ts = TargetSelector(TARGET_LESS_CAST, 2000, DAMAGE_PHYSICAL)
   VP = VPrediction()
+  SOWi = SOW(VP)
   
   Menu = scriptConfig("tDarius by Teecolz", "DariusCombo")
-  Orbwalker = SOW(VP)
            
   Menu:addSubMenu("[Darius - Orbwalker]", "SOWorb")
-  Orbwalker:LoadToMenu(Menu.SOWorb)
+  SOWi:LoadToMenu(Menu.SOWorb)
   
   Menu:addTS(ts)
-  ts.name = "Focus"
+  ts.name = "Darius"
      
   Menu:addSubMenu("[Darius - Combo]", "DariusCombo")
   Menu.DariusCombo:addParam("combo", "Combo", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("T"))
