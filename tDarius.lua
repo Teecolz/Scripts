@@ -30,8 +30,6 @@ if AUTOUPDATE then
   end
 end
 
-if myHero.charName ~= "Darius" then return end
-
 require 'SOW'
 require 'VPrediction'
 
