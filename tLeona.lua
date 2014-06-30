@@ -1,7 +1,5 @@
 if myHero.charName ~= "Leona" then return end
 
---[[Credit everyone else for Auto updater]]
-
 local version = "1.0"
 local author = "Teecolz"
 local scriptName = "tLeona"
