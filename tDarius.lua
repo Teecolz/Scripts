@@ -213,12 +213,15 @@ end
 
 function Wreset()
   if menu.combo.combokey and menu.combo.useW and Wready then
+      SOW:resetAA() 
       CastSpell(_W)
   end
   if  menu.lane.lanekey and menu.lane.useW and Wready then
+      SOW:resetAA()
       CastSpell(_W)
   end
   if menu.jungle.junglekey and menu.jungle.useW and Wready then
+      SOW:resetAA()
       CastSpell(_W)
   end
 end
