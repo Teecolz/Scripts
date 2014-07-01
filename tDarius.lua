@@ -6,7 +6,7 @@ require 'VPrediction'
 
 --[AUTOUPDATER]--
 
-local version = "1.11"
+local version = "1.2"
 local author = "Teecolz"
 local scriptName = "tDarius"
 local AUTOUPDATE = true
