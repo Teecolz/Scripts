@@ -6,7 +6,7 @@ require 'VPrediction'
 
 --[AUTOUPDATER]--
 
-local version = "1.1"
+local version = "1.11"
 local author = "Teecolz"
 local scriptName = "tDarius"
 local AUTOUPDATE = true
@@ -14,6 +14,7 @@ local UPDATE_HOST = "raw.github.com"
 local UPDATE_PATH = "/Teecolz/Scripts/master/tDarius.lua".."?rand="..math.random(1,10000)
 local UPDATE_FILE_PATH = SCRIPT_PATH.."tDarius.lua"
 local UPDATE_URL = "https://"..UPDATE_HOST..UPDATE_PATH
+
 
 function AutoupdaterMsg(msg) print("<font color='#5F9EA0'><b>[".. scriptName .."] </font><font color='#cffffffff'> "..msg..".</font>") end
 if AUTOUPDATE then
@@ -44,6 +45,9 @@ local levelSequence = {1, 3, 1, 2, 1, 4, 1, 2, 1, 2, 4, 2, 3, 2, 3, 4, 3, 3}
 local target
 local enemyTable = {}
 
+
+local TMTSlot, RAHSlot = nil, nil
+local TMTREADY, RAHREADY = false, false
 --[Spell Data]--
 local Qready, Wready, Eready, Rready = false, false, false, false
 
@@ -98,6 +102,7 @@ function Menu()
             menu.combo:addParam("useW", "Use W-Spell",  SCRIPT_PARAM_ONOFF, true)
             menu.combo:addParam("useE", "Use E-Spell",  SCRIPT_PARAM_ONOFF, true)
             menu.combo:addParam("useR", "Use R-Spell",  SCRIPT_PARAM_ONOFF, true)
+            menu.combo:addParam("useITEM", "Use Items",  SCRIPT_PARAM_ONOFF, true)
 
           menu:addSubMenu("tDarius: Harass", "harass")
             menu.harass:addParam("harasskey", "Harass", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("C"))
@@ -108,11 +113,13 @@ function Menu()
             menu.lane:addParam("lanekey", "Lane Clear", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("Z"))
             menu.lane:addParam("useQ", "Use Q-Spell", SCRIPT_PARAM_ONOFF, true)
             menu.lane:addParam("useW", "Use W-Spell", SCRIPT_PARAM_ONOFF, true)
+            menu.lane:addParam("useITEM", "Use Items",  SCRIPT_PARAM_ONOFF, true)
             
           menu:addSubMenu("tDarius: Jungle Clear", "jungle")
             menu.jungle:addParam("junglekey", "Jungle Clear", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("Z"))
             menu.jungle:addParam("useQ", "Use Q-Spell", SCRIPT_PARAM_ONOFF, true)
             menu.jungle:addParam("useW", "Use W-Spell", SCRIPT_PARAM_ONOFF, true)
+            menu.jungle:addParam("useITEM", "Use Items",  SCRIPT_PARAM_ONOFF, true)
 
           menu:addSubMenu("tDarius: Killsteal", "killsteal")
             menu.killsteal:addParam("killstealR", "Use R-Spell to Killsteal", SCRIPT_PARAM_ONOFF, true)
@@ -172,6 +179,12 @@ function OnTick()
 end
 
 function spell_check()
+  
+  TMTSlot, RAHSlot = GetInventorySlotItem(3077), GetInventorySlotItem(3074)
+  
+  TMTREADY = (TMTSlot ~= nil and myHero:CanUseSpell(TMTSlot) == READY)
+  RAHREADY = (RAHSlot ~= nil and myHero:CanUseSpell(RAHSlot) == READY)
+
   Qready = (myHero:CanUseSpell(_Q) == READY)
   Wready = (myHero:CanUseSpell(_W) == READY)
   Eready = (myHero:CanUseSpell(_E) == READY)
@@ -186,10 +199,11 @@ function Combo()
   local target  = ts.target
 
   if menu.combo.combokey and ts.target then
+    if menu.combo.useITEM and TMTREADY and GetDistance(target) < 275 then CastSpell(TMTSlot) end
+    if menu.combo.useITEM and RAHREADY and GetDistance(target) < 275 then CastSpell(RAHSlot) end
     if target and menu.combo.useQ and GetDistanceSqr(target) <= 180625 and Qready then
       CastSpell(_Q)
     end
-
     if target and menu.combo.useE and GetDistanceSqr(target) <= 291600 and Eready then
       local AOECastPosition, MainTargetHitChance, nTargets = VP:GetLineAOECastPosition(target, 0.5, 225, Erange, 1500, myHero, false)
       if nTargets >= 1 and GetDistance(AOECastPosition) <= Erange then
@@ -248,6 +262,8 @@ function LaneClear()
     for i, minion in pairs(EnemyMinions.objects) do
   if minion and minion.valid and not minion.dead then
         if menu.lane.useQ and GetDistanceSqr(minion) <= 180625 then CastSpell(_Q) end
+        if menu.lane.useITEM and TMTREADY and GetDistance(minion) < 275 then CastSpell(TMTSlot) end
+        if menu.lane.useITEM and RAHREADY and GetDistance(minion) < 275 then CastSpell(RAHSlot) end
       end    
     end
   end
@@ -260,6 +276,8 @@ function JungleClear()
     local JungleMob = GetJungleMob()
     if JungleMob ~= nil then
       if menu.jungle.useQ and GetDistanceSqr(JungleMob) <= 180625 then CastSpell(_Q) end
+      if menu.jungle.useITEM and TMTREADY and GetDistance(JungleMob) < 275 then CastSpell(TMTSlot) end
+      if menu.jungle.useITEM and RAHREADY and GetDistance(JungleMob) < 275 then CastSpell(RAHSlot) end
     end
 end
 
