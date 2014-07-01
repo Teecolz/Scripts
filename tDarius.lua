@@ -6,7 +6,7 @@ require 'VPrediction'
 
 --[AUTOUPDATER]--
 
-local version = "1.0"
+local version = "1.1"
 local author = "Teecolz"
 local scriptName = "tDarius"
 local AUTOUPDATE = true
@@ -64,6 +64,9 @@ function OnLoad()
   Init()
   PrintChat("<font color=\"#78CCDB\"><b>" ..">> tDarius has been loaded")
   Loaded = true
+  iSOW:RegisterAfterAttackCallback(Wreset)
+  JungVariables()
+  EnemyMinions = minionManager(MINION_ENEMY, 425, myHero, MINION_SORT_HEALTH_ASC)
   
   for i, enemy in pairs(GetEnemyHeroes()) do
     if enemy then 
@@ -74,6 +77,8 @@ function OnLoad()
     end
   end
 end
+
+
 
 function Init()
   --[TargetSelector]--
@@ -98,6 +103,16 @@ function Menu()
             menu.harass:addParam("harasskey", "Harass", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("C"))
             menu.harass:addParam("useQ", "Use Q-Spell", SCRIPT_PARAM_ONOFF, true)
             menu.harass:addParam("mana", "Dont Harass if mana < %", SCRIPT_PARAM_SLICE, 0, 0, 100)
+            
+          menu:addSubMenu("tDarius: Lane Clear", "lane")
+            menu.lane:addParam("lanekey", "Lane Clear", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("Z"))
+            menu.lane:addParam("useQ", "Use Q-Spell", SCRIPT_PARAM_ONOFF, true)
+            menu.lane:addParam("useW", "Use W-Spell", SCRIPT_PARAM_ONOFF, true)
+            
+          menu:addSubMenu("tDarius: Jungle Clear", "jungle")
+            menu.jungle:addParam("junglekey", "Jungle Clear", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("Z"))
+            menu.jungle:addParam("useQ", "Use Q-Spell", SCRIPT_PARAM_ONOFF, true)
+            menu.jungle:addParam("useW", "Use W-Spell", SCRIPT_PARAM_ONOFF, true)
 
           menu:addSubMenu("tDarius: Killsteal", "killsteal")
             menu.killsteal:addParam("killstealR", "Use R-Spell to Killsteal", SCRIPT_PARAM_ONOFF, true)
@@ -129,6 +144,7 @@ function OnTick()
   if Loaded then
     ts:update()
   end
+  EnemyMinions:update()
   spell_check()
   if menu.extra.autolevel then
     autoLevelSetSequence(levelSequence)
@@ -140,6 +156,12 @@ function OnTick()
   end
   if menu.harass.harasskey then
     Harass()
+  end
+  if menu.lane.lanekey then
+    LaneClear()
+  end
+  if menu.jungle.junglekey then
+    JungleClear()
   end
   if menu.killsteal.killstealR then
     killstealR()
@@ -164,19 +186,17 @@ function Combo()
   local target  = ts.target
 
   if menu.combo.combokey and ts.target then
-    if target and GetDistanceSqr(target) <= 180625 and Qready then
+    if target and menu.combo.useQ and GetDistanceSqr(target) <= 180625 and Qready then
       CastSpell(_Q)
     end
-    if target and GetDistanceSqr(target) <= 21025 and Wready then
-      CastSpell(_W)
-    end
-    if target and GetDistanceSqr(target) <= 291600 and Eready then
+
+    if target and menu.combo.useE and GetDistanceSqr(target) <= 291600 and Eready then
       local AOECastPosition, MainTargetHitChance, nTargets = VP:GetLineAOECastPosition(target, 0.5, 225, Erange, 1500, myHero, false)
       if nTargets >= 1 and GetDistance(AOECastPosition) <= Erange then
         CastSpell(_E, target.x, target.z)
       end
     end
-    if RReady then
+    if RReady and menu.combo.useR then
       for i, enemy in pairs(enemyTable) do
         if enemy.object == target and GetDistance(target) < 460 then
           local multiplier = GetMultiplier(enemy.stack)
@@ -190,6 +210,18 @@ function Combo()
   end
 end
 
+
+function Wreset()
+  if menu.combo.combokey and menu.combo.useW and Wready then
+      CastSpell(_W)
+  end
+  if  menu.lane.lanekey and menu.lane.useW and Wready then
+      CastSpell(_W)
+  end
+  if menu.jungle.junglekey and menu.jungle.useW and Wready then
+      CastSpell(_W)
+  end
+end
 -------------------------------------------------
 -------------------------------------------------
 --[Harass]--
@@ -205,6 +237,132 @@ function Harass()
   end
 end
 
+-------------------------------------------------
+-------------------------------------------------
+--[LaneClear]--
+function LaneClear()
+  if not GetJungleMob() then
+    for i, minion in pairs(EnemyMinions.objects) do
+  if minion and minion.valid and not minion.dead then
+        if menu.lane.useQ and GetDistanceSqr(minion) <= 180625 then CastSpell(_Q) end
+      end    
+    end
+  end
+end
+
+-------------------------------------------------
+-------------------------------------------------
+--[JungleCLear]--
+function JungleClear()
+    local JungleMob = GetJungleMob()
+    if JungleMob ~= nil then
+      if menu.jungle.useQ and GetDistanceSqr(JungleMob) <= 180625 then CastSpell(_Q) end
+    end
+end
+
+function GetJungleMob()
+  for _, Mob in pairs(JungleFocusMobs) do
+    if ValidTarget(Mob, 425) then return Mob end
+  end
+  for _, Mob in pairs(JungleMobs) do
+    if ValidTarget(Mob, 425) then return Mob end
+  end
+end
+
+function OnCreateObj(obj)
+  if obj.valid then
+    if FocusJungleNames[obj.name] then
+      JungleFocusMobs[#JungleFocusMobs+1] = obj
+    elseif JungleMobNames[obj.name] then
+      JungleMobs[#JungleMobs+1] = obj
+    end
+  end
+end
+
+function OnDeleteObj(obj)
+  for i, Mob in pairs(JungleMobs) do
+    if obj.name == Mob.name then
+      table.remove(JungleMobs, i)
+    end
+  end
+  for i, Mob in pairs(JungleFocusMobs) do
+    if obj.name == Mob.name then
+      table.remove(JungleFocusMobs, i)
+    end
+  end
+end
+
+function JungVariables()
+  JungleMobs = {}
+  JungleFocusMobs = {}
+  JungleMobNames = { 
+    ["Wolf8.1.2"]     = true,
+    ["Wolf8.1.3"]     = true,
+    ["YoungLizard7.1.2"]  = true,
+    ["YoungLizard7.1.3"]  = true,
+    ["LesserWraith9.1.3"] = true,
+    ["LesserWraith9.1.2"] = true,
+    ["LesserWraith9.1.4"] = true,
+    ["YoungLizard10.1.2"] = true,
+    ["YoungLizard10.1.3"] = true,
+    ["SmallGolem11.1.1"]  = true,
+    ["Wolf2.1.2"]     = true,
+    ["Wolf2.1.3"]     = true,
+    ["YoungLizard1.1.2"]  = true,
+    ["YoungLizard1.1.3"]  = true,
+    ["LesserWraith3.1.3"] = true,
+    ["LesserWraith3.1.2"] = true,
+    ["LesserWraith3.1.4"] = true,
+    ["YoungLizard4.1.2"]  = true,
+    ["YoungLizard4.1.3"]  = true,
+    ["SmallGolem5.1.1"]   = true
+  }
+  
+  FocusJungleNames = {
+    ["Dragon6.1.1"]     = true,
+    ["Worm12.1.1"]      = true,
+    ["GiantWolf8.1.1"]    = true,
+    ["AncientGolem7.1.1"] = true,
+    ["Wraith9.1.1"]     = true,
+    ["LizardElder10.1.1"] = true,
+    ["Golem11.1.2"]     = true,
+    ["GiantWolf2.1.1"]    = true,
+    ["AncientGolem1.1.1"] = true,
+    ["Wraith3.1.1"]     = true,
+    ["LizardElder4.1.1"]  = true,
+    ["Golem5.1.2"]      = true,
+    ["GreatWraith13.1.1"] = true,
+    ["GreatWraith14.1.1"] = true
+  }
+    
+  for i = 0, objManager.maxObjects do
+    local object = objManager:getObject(i)
+    if object and object.valid and not object.dead then
+      if FocusJungleNames[object.name] then
+        JungleFocusMobs[#JungleFocusMobs+1] = object
+      elseif JungleMobNames[object.name] then
+        JungleMobs[#JungleMobs+1] = object
+      end
+    end
+  end
+end
+
+
+-------------------------------------------------
+-------------------------------------------------
+--[Tower Stuff]--
+function UnitAtTower(unit,offset)
+	for i, turret in pairs(GetTurrets()) do
+		if turret ~= nil then
+			if turret.team ~= myHero.team then
+				if GetDistance(unit, turret) <= turret.range+offset then
+					return true
+				end
+			end
+		end
+	end
+	return false
+end
 -------------------------------------------------
 -------------------------------------------------
 --[KillSteal]--
