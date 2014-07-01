@@ -1,8 +1,12 @@
 if myHero.charName ~= "Darius" then return end
 
---[[Credit everyone else for Auto updater]]
 
-local version = "1.3"
+require 'SOW'
+require 'VPrediction'
+
+--[AUTOUPDATER]--
+
+local version = "1.0"
 local author = "Teecolz"
 local scriptName = "tDarius"
 local AUTOUPDATE = true
@@ -30,66 +34,36 @@ if AUTOUPDATE then
   end
 end
 
-require 'SOW'
-require 'VPrediction'
+-------------------------------------------------
+-------------------------------------------------
 
-PrintChat("Loaded tDarius by Teecolz")
-
+--[Other Stuff]--
+local menu
 local ts
+local levelSequence = {1, 3, 1, 2, 1, 4, 1, 2, 1, 2, 4, 2, 3, 2, 3, 4, 3, 3}
 local target
-local VP = nil
 local enemyTable = {}
-local QREADY = (myHero:CanUseSpell(_Q) == READY)
-local WREADY = (myHero:CanUseSpell(_W) == READY)
-local EREADY = (myHero:CanUseSpell(_E) == READY)
-local RREADY = (myHero:CanUseSpell(_R) == READY)
-local Qrange = 425
-local Wrange = 145
-local Erange = 540
-local Eradius = 225
-local Espeed = 1500
-local Edelay = 0.5
-local Rrange = 460
-local Espeed = 1500
-local QReady, WReady, EReady, RReady = false, false, false, false
-local qOff, wOff, eOff, rOff = 0,0,0,0
-local abilitySequence = {1, 3, 1, 2, 1, 4, 1, 2, 1, 2, 4, 2, 3, 2, 3, 4, 3, 3} 
 
+--[Spell Data]--
+local Qready, Wready, Eready, Rready = false, false, false, false
+
+--[Spell Range]--
+local AARange = 125
+local Qrange  = 425
+local Wrange  = 210
+local Erange  = 540
+local Rrange  = 460
+
+-------------------------------------------------
+-------------------------------------------------
+--[OnLoad]--
 function OnLoad()
-  
-  ts = TargetSelector(TARGET_LESS_CAST, 540, DAMAGE_PHYSICAL)
-  VP = VPrediction()
-  SOWi = SOW(VP)
-  
-  Menu = scriptConfig("tDarius by Teecolz", "DariusCombo")
-  
-  Menu:addSubMenu("[Darius - Orbwalker]", "SOWorb")
-  SOWi:LoadToMenu(Menu.SOWorb)
-  
-  Menu:addTS(ts)
-  ts.name = "Darius"
-  
-  Menu:addSubMenu("[Darius - Combo]", "DariusCombo")
-  Menu.DariusCombo:addParam("combo", "Combo", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("T"))
-  Menu.DariusCombo:addParam("comboQ", "Use Q in combo", SCRIPT_PARAM_ONOFF, true)
-  Menu.DariusCombo:addParam("comboW", "Use W in combo", SCRIPT_PARAM_ONOFF, true)
-  Menu.DariusCombo:addParam("comboE", "Use E in combo", SCRIPT_PARAM_ONOFF, true)
-  Menu.DariusCombo:addParam("comboR", "Use R in combo [if killable]", SCRIPT_PARAM_ONOFF, true)
-  
-  Menu:addSubMenu ("[Darius - Harass]", "Harass")
-  Menu.Harass:addParam("autoQ", "Auto Q", SCRIPT_PARAM_ONOFF, true)
-  
-  Menu:addSubMenu("[Darius - Drawing]", "drawings")
-  Menu.drawings:addParam("drawCircleE", "Draw E Range", SCRIPT_PARAM_ONOFF, true)
-  Menu.drawings:addParam("drawCircleR", "Draw R Range", SCRIPT_PARAM_ONOFF, true)
-  Menu.drawings:addParam("drawCircleQ", "Draw Q Range", SCRIPT_PARAM_ONOFF, true)
-  
-  Menu:addSubMenu("[Darius - Additionals]", "Ads")
-  Menu.Ads:addParam("AutoLevelspells", "Auto-Level Spells", SCRIPT_PARAM_ONOFF, false)
-  Menu.Ads:addParam("Killsteal", "Killsteal with Q", SCRIPT_PARAM_ONOFF, false)
-  Menu.Ads:addParam("debug", "Debug", SCRIPT_PARAM_ONOFF, false)
-  
-  -- Credit Feez :)
+  VP    = VPrediction()
+  iSOW  = SOW(VP)
+  Menu()
+  Init()
+  PrintChat("<font color=\"#78CCDB\"><b>" ..">> tDarius has been loaded")
+  Loaded = true
   
   for i, enemy in pairs(GetEnemyHeroes()) do
     if enemy then 
@@ -101,145 +75,220 @@ function OnLoad()
   end
 end
 
--- End Credit Feez :)
+function Init()
+  --[TargetSelector]--
+    ts      = TargetSelector(TARGET_LESS_CAST, 540, DAMAGE_PHYSICAL)
+    ts.name = "Darius"
+  end
+  
+function Menu()  
+        menu = scriptConfig("tDarius: Main Menu", "Darius")
 
+          menu:addSubMenu("tDarius: Orbwalk", "Orbwalk")
+            iSOW:LoadToMenu(menu.Orbwalk)  
+ 
+          menu:addSubMenu("tDarius: Combo", "combo")
+            menu.combo:addParam("combokey", "Combo",    SCRIPT_PARAM_ONKEYDOWN, false, 32)
+            menu.combo:addParam("useQ", "Use Q-Spell",  SCRIPT_PARAM_ONOFF, true)
+            menu.combo:addParam("useW", "Use W-Spell",  SCRIPT_PARAM_ONOFF, true)
+            menu.combo:addParam("useE", "Use E-Spell",  SCRIPT_PARAM_ONOFF, true)
+            menu.combo:addParam("useR", "Use R-Spell",  SCRIPT_PARAM_ONOFF, true)
+
+          menu:addSubMenu("tDarius: Harass", "harass")
+            menu.harass:addParam("harasskey", "Harass", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("C"))
+            menu.harass:addParam("useQ", "Use Q-Spell", SCRIPT_PARAM_ONOFF, true)
+            menu.harass:addParam("mana", "Dont Harass if mana < %", SCRIPT_PARAM_SLICE, 0, 0, 100)
+
+          menu:addSubMenu("tDarius: Killsteal", "killsteal")
+            menu.killsteal:addParam("killstealR", "Use R-Spell to Killsteal", SCRIPT_PARAM_ONOFF, true)
+            menu.killsteal:addParam("killstealQ", "Use Q-Spell to Killsteal", SCRIPT_PARAM_ONOFF, true)
+
+          menu:addSubMenu("tDarius: Drawings", "draw")
+            menu.draw:addParam("drawAA", "Draw AA Range", SCRIPT_PARAM_ONOFF, true)
+            menu.draw:addParam("drawQ", "Draw Q Range",   SCRIPT_PARAM_ONOFF, true)
+            menu.draw:addParam("drawE", "Draw E Range",   SCRIPT_PARAM_ONOFF, true)
+            menu.draw:addParam("drawR", "Draw R Range",   SCRIPT_PARAM_ONOFF, true)
+            menu.draw:addParam("aftercombo", "Draw after Combo", SCRIPT_PARAM_ONOFF, true)
+          menu.draw:addSubMenu("Killsteal", "killsteal")
+            menu.draw.killsteal:addParam("RDraw", "Draw Enemys killed by R", SCRIPT_PARAM_ONOFF, true)
+
+          menu:addSubMenu("tDarius: Extras", "extra")
+            menu.extra:addParam("autolevel", "AutoLevel Spells", SCRIPT_PARAM_ONOFF, false)
+            menu.extra:addParam("debug", "Debug", SCRIPT_PARAM_ONOFF, false)
+
+      --[PermaShow]--
+      menu.combo:permaShow("combokey")
+      menu.harass:permaShow("harasskey")
+end
+
+-------------------------------------------------
+-------------------------------------------------
+--[OnTick]--
 function OnTick()
-  
   if myHero.dead then return end
-  
-  ts:update()
-  target = ts.target
-  Killsteal()
-  AutoQ()
-  
-  if Menu.Ads.AutoLevelspells then 
-    AutoLevel()
+  if Loaded then
+    ts:update()
   end
-  
-  if Menu.DariusCombo.combo then 
-    combo() 
+  spell_check()
+  if menu.extra.autolevel then
+    autoLevelSetSequence(levelSequence)
   end
-  
-  if Menu.DariusCombo.comboR then
-    UseR()
+  iSOW:EnableAttacks()
+
+  if menu.combo.combokey then
+    Combo()
+  end
+  if menu.harass.harasskey then
+    Harass()
+  end
+  if menu.killsteal.killstealR then
+    killstealR()
+  end
+  if menu.killsteal.killstealQ then
+    killstealQ()
   end
 end
 
-function AutoQ()
-  
-  if target and GetDistanceSqr(target) < 180625 and QREADY and Menu.Harass.autoQ then
-    CastSpell(_Q)
-  end
+function spell_check()
+  Qready = (myHero:CanUseSpell(_Q) == READY)
+  Wready = (myHero:CanUseSpell(_W) == READY)
+  Eready = (myHero:CanUseSpell(_E) == READY)
+  Rready = (myHero:CanUseSpell(_R) == READY)
 end
 
-function combo()
-  
-  if Menu.DariusCombo.comboQ then UseQ() end 
-  if Menu.DariusCombo.comboW then UseW() end
-  if Menu.DariusCombo.comboE then UseE() end
-  if Menu.DariusCombo.comboR then UseR() end
-  
-end
+-------------------------------------------------
+-------------------------------------------------
+--[Combo]--
+function Combo()
+  local Enemies = GetEnemyHeroes
+  local target  = ts.target
 
-function UseQ()
-  
-  if target and GetDistanceSqr(target) <= 180625 and QREADY then
-    CastSpell(_Q)
-  end
-  
-end
-
-function UseW()
-  
-  if target and GetDistanceSqr(target) <= 21025 and WREADY then
-    CastSpell(_W)
-  end
-  
-end
-
-function UseE()
-  
-  if target and GetDistanceSqr(target) <= 291600 and EREADY then
-    local AOECastPosition, MainTargetHitChance, nTargets = VP:GetLineAOECastPosition(target, Edelay, Eradius, Erange, Espeed, myHero, false)
-    if nTargets >= 1 and GetDistance(AOECastPosition) <= Erange then
-      CastSpell(_E, target.x, target.z)
+  if menu.combo.combokey and ts.target then
+    if target and GetDistanceSqr(target) <= 180625 and Qready then
+      CastSpell(_Q)
     end
-  end
-  
-end
-
-function UseR()
-  if RREADY then
-    for i, enemy in ipairs(enemyTable) do
-      if enemy.object == target and GetDistanceSqr(target) < 302500 then
-        local multiplier = GetMultiplier(enemy.stack)
-        local rDmg = multiplier * getDmg("R", target, myHero)
-        if target.health <= rDmg then
-          CastSpell(_R, target)
+    if target and GetDistanceSqr(target) <= 21025 and Wready then
+      CastSpell(_W)
+    end
+    if target and GetDistanceSqr(target) <= 291600 and Eready then
+      local AOECastPosition, MainTargetHitChance, nTargets = VP:GetLineAOECastPosition(target, 0.5, 225, Erange, 1500, myHero, false)
+      if nTargets >= 1 and GetDistance(AOECastPosition) <= Erange then
+        CastSpell(_E, target.x, target.z)
+      end
+    end
+    if RReady then
+      for i, enemy in pairs(enemyTable) do
+        if enemy.object == target and GetDistance(target) < 460 then
+          local multiplier = GetMultiplier(enemy.stack)
+          local rDmg = multiplier * getDmg("R", target, myHero)
+          if target.health <= rDmg then
+            CastSpell(_R, target)
+          end
         end
       end
     end
   end
 end
 
-function Killsteal()
-  
-  for i=1, heroManager.iCount do
-    local target = heroManager:GetHero(i)
-    qDmg = getDmg("Q", target, myHero) or 0
-    
-    if ValidTarget(target) and GetDistanceSqr(target) <= 180625 and QREADY and target.health <= qDmg then
+-------------------------------------------------
+-------------------------------------------------
+--[Harass]--
+function Harass()
+  local Enemies = GetEnemyHeroes
+  local target = ts.target
+  if menu.harass.mana > (myHero.mana / myHero.maxMana) * 100 then return end
+
+  if menu.harass.harasskey and target then
+    if menu.harass.useQ and GetDistanceSqr(target) <= 180625 then
       CastSpell(_Q)
     end
   end
 end
 
-function getKillText(target)
-  if target then
-    qDmg = getDmg("Q", target, myHero) or 0
-    wDmg = getDmg("W", target, myHero) or 0
-    eDmg = getDmg("E", target, myHero) or 0
-    rDmg = getDmg("R", target, myHero) or 0
-    
-    if eDmg > target.health then
-      return "E Killable"
+-------------------------------------------------
+-------------------------------------------------
+--[KillSteal]--
+function killstealR()
+  local target = ts.target
+  local Enemies = GetEnemyHeroes()
+  
+    for i, enemy in pairs(Enemies) do
+      if ValidTarget(enemy, Rrange) and not enemy.dead and GetDistance(enemy) < Rrange then
+        if (getDmg("R", enemy,myHero)+getDmg("AD",enemy,myHero)) > enemy.health and
+          menu.killsteal.killstealR then
+            CastSpell(_R, target)
+        end
+        
+      end
     end
-    
-    if qDmg > target.health then
-      return "Q Killable"
-    end
-    
-    if qDmg + wDmg + eDmg + rDmg > target.health then
-      return "Combo Killable"
-    end 
-    
-    if qDmg + eDmg < target.health then
-      return "Harass"
-    end
-    
+  
+end
+
+-------------------------------------------------
+-------------------------------------------------
+--[OnDraw]--
+function OnDraw()
+  if myHero.dead then return end
+  draw_Range()
+  draw_Range_aftercombo()
+  killstealR_information()
+end
+
+function draw_Range()
+  if menu.draw.drawAA then
+    DrawCircle(myHero.x, myHero.y, myHero.z, AARange, ARGB(255,100,0,50))
+  end
+  if menu.draw.drawQ and Qready then
+    DrawCircle(myHero.x, myHero.y, myHero.z, Qrange, ARGB(255,100,0,50))
+  end
+  if menu.draw.drawE and Eready then
+    DrawCircle(myHero.x, myHero.y, myHero.z, Erange, ARGB(255,100,0,50))
+  end
+  if menu.draw.drawR and Rready then
+    DrawCircle(myHero.x, myHero.y, myHero.z, Rrange, ARGB(255,100,0,50))
   end
 end
 
-function AutoLevel()
-  local qL, wL, eL, rL = player:GetSpellData(_Q).level + qOff, player:GetSpellData(_W).level + wOff, player:GetSpellData(_E).level + eOff, player:GetSpellData(_R).level + rOff
-  if qL + wL + eL + rL < player.level then
-    local spellSlot = { SPELL_1, SPELL_2, SPELL_3, SPELL_4, }
-    local level = { 0, 0, 0, 0 }
-    for i = 1, player.level, 1 do
-      level[abilitySequence[i]] = level[abilitySequence[i]] + 1
-    end
-    for i, v in ipairs({ qL, wL, eL, rL }) do
-      if v < level[i] then LevelSpell(spellSlot[i]) end
+function draw_Range_aftercombo()
+  if menu.draw.drawQ and menu.draw.aftercombo and not Qready then
+    DrawCircle(myHero.x, myHero.y, myHero.z, Qrange, ARGB(85,77,0,77))
+  end
+  if menu.draw.drawE and menu.draw.aftercombo and not Eready then
+    DrawCircle(myHero.x, myHero.y, myHero.z, Erange, ARGB(85,77,0,77))
+  end
+  if menu.draw.drawR and menu.draw.aftercombo and not Rready then
+    DrawCircle(myHero.x, myHero.y, myHero.z, Rrange, ARGB(85,77,0,77))
+  end
+end
+
+function killstealR_information()
+  local Enemies = GetEnemyHeroes()
+
+  if Rready then
+    for i, enemy in pairs(Enemies) do
+      if ValidTarget(enemy, 2000) and not enemy.dead and GetDistance(enemy) < 3000 then
+        if (getDmg("R", enemy,myHero)+getDmg("AD",enemy,myHero)) > enemy.health and
+          menu.draw.killsteal.RDraw then
+          DrawText3D("Press R to kill (Dunk)!", enemy.x, enemy.y, enemy.z, 15, RGB(255, 150, 0), 0)
+          DrawCircle3D(enemy.x, enemy.y, enemy.z, 130, 1, RGB(255, 150, 0))
+          DrawCircle3D(enemy.x, enemy.y, enemy.z, 150, 1, RGB(255, 150, 0))
+          DrawCircle3D(enemy.x, enemy.y, enemy.z, 170, 1, RGB(255, 150, 0))
+        end
+      end
     end
   end
 end
 
---[[ Credit Trees, Fuggi, and mostly Feez]]
+function killstealQ()
+  local Enemies = GetEnemyHeroes()
 
-function GetMultiplier(stack)
-  
-  return 1 + stack/5
-  
+  for i, enemy in pairs(Enemies) do
+      if ValidTarget(enemy, Qrange) and not enemy.dead and GetDistance(enemy) < Qrange then
+        if (getDmg("Q", enemy,myHero)+getDmg("AD", enemy,myHero)) > enemy.health then
+            CastSpell(_Q)
+        end
+      end
+  end
 end
 
 function OnGainBuff(unit, buff)
@@ -250,7 +299,7 @@ function OnGainBuff(unit, buff)
       end
     end
   end
-  if Menu.Ads.debug then print(enemyTable) end
+  if menu.extra.debug then print(enemyTable) end
 end
 
 function OnLoseBuff(unit, buff)
@@ -272,22 +321,9 @@ function OnUpdateBuff(unit, buff)
     end
   end
 end
--- [[End Credit Trees, Fuggi, and Feez]]
 
-function OnDraw()
+function GetMultiplier(stack)
+
+  return 1 + stack/5
   
-  if ValidTarget(target) then
-    DrawText3D(getKillText(target), target.x, target.y , target.z, 20, ARGB(255, 255, 255, 0), true)
-  end
-  
-  if Menu.drawings.drawCircleE then 
-    DrawCircle(myHero.x, myHero.y, myHero.z, Erange, 0x111111)
-  end
-  
-  if Menu.drawings.drawCircleR then
-    DrawCircle(myHero.x, myHero.y, myHero.z, Rrange, 0x111111)
-  end
-  if Menu.drawings.drawCircleQ then
-    DrawCircle(myHero.x, myHero.y, myHero.z, Qrange, 0x111111)
-  end
 end
