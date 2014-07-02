@@ -6,7 +6,7 @@ require 'VPrediction'
 
 --[AUTOUPDATER]--
 
-local version = "1.2"
+local version = "1.21"
 local author = "Teecolz"
 local scriptName = "tDarius"
 local AUTOUPDATE = true
@@ -103,6 +103,7 @@ function Menu()
             menu.combo:addParam("useE", "Use E-Spell",  SCRIPT_PARAM_ONOFF, true)
             menu.combo:addParam("useR", "Use R-Spell",  SCRIPT_PARAM_ONOFF, true)
             menu.combo:addParam("useITEM", "Use Items",  SCRIPT_PARAM_ONOFF, true)
+            menu.combo:addParam("rBuffer", "R% to ult at",SCRIPT_PARAM_SLICE, 100, 0, 100, 2)
 
           menu:addSubMenu("tDarius: Harass", "harass")
             menu.harass:addParam("harasskey", "Harass", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("C"))
@@ -130,6 +131,8 @@ function Menu()
             menu.draw:addParam("drawQ", "Draw Q Range",   SCRIPT_PARAM_ONOFF, true)
             menu.draw:addParam("drawE", "Draw E Range",   SCRIPT_PARAM_ONOFF, true)
             menu.draw:addParam("drawR", "Draw R Range",   SCRIPT_PARAM_ONOFF, true)
+	    menu.draw:addParam("drawRD", "Draw Ult/Health damage",   SCRIPT_PARAM_ONOFF, true)
+            menu.draw:addParam("drawP", "Draw Passive damage",   SCRIPT_PARAM_ONOFF, true)
             menu.draw:addParam("aftercombo", "Draw after Combo", SCRIPT_PARAM_ONOFF, true)
           menu.draw:addSubMenu("Killsteal", "killsteal")
             menu.draw.killsteal:addParam("RDraw", "Draw Enemys killed by R", SCRIPT_PARAM_ONOFF, true)
@@ -215,7 +218,7 @@ function Combo()
         if enemy.object == target and GetDistance(target) < 460 then
           local multiplier = GetMultiplier(enemy.stack)
           local rDmg = multiplier * getDmg("R", target, myHero)
-          if target.health <= rDmg then
+          if target.health <= rDmg*(menu.combo.rBuffer/100) then
             CastSpell(_R, target)
           end
         end
@@ -388,19 +391,15 @@ end
 -------------------------------------------------
 --[KillSteal]--
 function killstealR()
-  local target = ts.target
-  local Enemies = GetEnemyHeroes()
-  
-    for i, enemy in pairs(Enemies) do
-      if ValidTarget(enemy, Rrange) and not enemy.dead and GetDistance(enemy) < Rrange then
-        if (getDmg("R", enemy,myHero)+getDmg("AD",enemy,myHero)) > enemy.health and
-          menu.killsteal.killstealR then
-            CastSpell(_R, target)
-        end
-        
+  for i, enemy in pairs(enemyTable) do
+    if GetDistance(enemy.object) < 460 then
+      local multiplier = GetMultiplier(enemy.stack)
+      local rDmg = multiplier * getDmg("R", enemy.object, myHero)
+      if enemy.object.health <= rDmg*(menu.combo.rBuffer/100) and menu.killsteal.killstealR then
+        CastSpell(_R, enemy.object)
       end
     end
-  
+  end
 end
 
 -------------------------------------------------
@@ -442,17 +441,26 @@ end
 
 function killstealR_information()
   local Enemies = GetEnemyHeroes()
-
-  if Rready then
-    for i, enemy in pairs(Enemies) do
-      if ValidTarget(enemy, 2000) and not enemy.dead and GetDistance(enemy) < 3000 then
-        if (getDmg("R", enemy,myHero)+getDmg("AD",enemy,myHero)) > enemy.health and
-          menu.draw.killsteal.RDraw then
-          DrawText3D("Press R to kill (Dunk)!", enemy.x, enemy.y, enemy.z, 15, RGB(255, 150, 0), 0)
-          DrawCircle3D(enemy.x, enemy.y, enemy.z, 130, 1, RGB(255, 150, 0))
-          DrawCircle3D(enemy.x, enemy.y, enemy.z, 150, 1, RGB(255, 150, 0))
-          DrawCircle3D(enemy.x, enemy.y, enemy.z, 170, 1, RGB(255, 150, 0))
-        end
+  for i, enemy in pairs(enemyTable) do
+    if not enemy.object.dead and enemy.object.visible then
+      local pDmg = getDmg("P", enemy.object, myHero)
+      local pDmgT = pDmg * enemy.stack
+      local pDmgTint = math.floor(pDmgT)
+      local Ehealth = math.floor(enemy.object.health)
+      if pDmgT < enemy.object.health and menu.draw.drawP then
+        DrawText3D("["..pDmgT.."/"..Ehealth.."] - passive", enemy.object.x, enemy.object.y, enemy.object.z, 20, RGB(0, 255, 0), 0)
+      elseif menu.draw.drawP then
+        DrawText3D("[DEAD]", enemy.object.x, enemy.object.y, enemy.object.z, 30, RGB(255, 0, 0), 0)
+      end
+      local multiplier = GetMultiplier(enemy.stack)
+      local rDmg = math.floor(multiplier * getDmg("R", enemy.object, myHero))
+      if enemy.object.health <= rDmg*(menu.combo.rBuffer/100) and menu.draw.killsteal.RDraw and Rready then
+        DrawText3D("Press R to kill (Dunk)!", enemy.object.x, enemy.object.y, enemy.object.z-50, 30, RGB(255, 150, 0), 0)
+        DrawCircle3D(enemy.object.x, enemy.object.y, enemy.object.z, 130, 1, RGB(255, 150, 0))
+        DrawCircle3D(enemy.object.x, enemy.object.y, enemy.object.z, 150, 1, RGB(255, 150, 0))
+        DrawCircle3D(enemy.object.x, enemy.object.y, enemy.object.z, 170, 1, RGB(255, 150, 0))
+      elseif menu.draw.drawRD then
+        DrawText3D("["..rDmg.."/"..Ehealth.."] - ult", enemy.object.x, enemy.object.y, enemy.object.z-50, 20, RGB(0, 255, 0), 0)
       end
     end
   end
