@@ -6,7 +6,7 @@ require 'VPrediction'
 
 --[AUTOUPDATER]--
 
-local version = "1.21"
+local version = "1.22"
 local author = "Teecolz"
 local scriptName = "tDarius"
 local AUTOUPDATE = true
@@ -99,6 +99,8 @@ function Menu()
           menu:addSubMenu("tDarius: Combo", "combo")
             menu.combo:addParam("combokey", "Combo",    SCRIPT_PARAM_ONKEYDOWN, false, 32)
             menu.combo:addParam("useQ", "Use Q-Spell",  SCRIPT_PARAM_ONOFF, true)
+            menu.combo:addSubMenu("Q Options", "qoptions")
+            menu.combo.qoptions:addParam("qmax", "Only use Q at max damage", SCRIPT_PARAM_ONOFF, false)
             menu.combo:addParam("useW", "Use W-Spell",  SCRIPT_PARAM_ONOFF, true)
             menu.combo:addParam("useE", "Use E-Spell",  SCRIPT_PARAM_ONOFF, true)
             menu.combo:addParam("useR", "Use R-Spell",  SCRIPT_PARAM_ONOFF, true)
@@ -131,7 +133,7 @@ function Menu()
             menu.draw:addParam("drawQ", "Draw Q Range",   SCRIPT_PARAM_ONOFF, true)
             menu.draw:addParam("drawE", "Draw E Range",   SCRIPT_PARAM_ONOFF, true)
             menu.draw:addParam("drawR", "Draw R Range",   SCRIPT_PARAM_ONOFF, true)
-	    menu.draw:addParam("drawRD", "Draw Ult/Health damage",   SCRIPT_PARAM_ONOFF, true)
+      menu.draw:addParam("drawRD", "Draw Ult/Health damage",   SCRIPT_PARAM_ONOFF, true)
             menu.draw:addParam("drawP", "Draw Passive damage",   SCRIPT_PARAM_ONOFF, true)
             menu.draw:addParam("aftercombo", "Draw after Combo", SCRIPT_PARAM_ONOFF, true)
           menu.draw:addSubMenu("Killsteal", "killsteal")
@@ -204,13 +206,15 @@ function Combo()
   if menu.combo.combokey and ts.target then
     if menu.combo.useITEM and TMTREADY and GetDistance(target) < 275 then CastSpell(TMTSlot) end
     if menu.combo.useITEM and RAHREADY and GetDistance(target) < 275 then CastSpell(RAHSlot) end
-    if target and menu.combo.useQ and GetDistanceSqr(target) <= 180625 and Qready then
-      CastSpell(_Q)
-    end
+    if target and menu.combo.useQ and menu.combo.qoptions.qmax and Qready and GetDistance(target) < 425 and GetDistance(target) > 270 then
+        CastSpell(_Q)
+       elseif target and menu.combo.useQ and GetDistanceSqr(target) <= 180625 and Qready then
+          CastSpell(_Q)
+       end
     if target and menu.combo.useE and GetDistanceSqr(target) <= 291600 and Eready then
       local AOECastPosition, MainTargetHitChance, nTargets = VP:GetLineAOECastPosition(target, 0.5, 225, Erange, 1500, myHero, false)
       if nTargets >= 1 and GetDistance(AOECastPosition) <= Erange then
-        CastSpell(_E, target.x, target.z)
+        CastSpell(_E, AOECastPosition.x, AOECastPosition.z)
       end
     end
     if RReady and menu.combo.useR then
@@ -218,7 +222,7 @@ function Combo()
         if enemy.object == target and GetDistance(target) < 460 then
           local multiplier = GetMultiplier(enemy.stack)
           local rDmg = multiplier * getDmg("R", target, myHero)
-          if target.health <= rDmg*(menu.combo.rBuffer/100) then
+          if target.health <= rDmg*(menu.combo.rBuffer/100) and not target.bInvulnerable then
             CastSpell(_R, target)
           end
         end
@@ -376,16 +380,16 @@ end
 -------------------------------------------------
 --[Tower Stuff]--
 function UnitAtTower(unit,offset)
-	for i, turret in pairs(GetTurrets()) do
-		if turret ~= nil then
-			if turret.team ~= myHero.team then
-				if GetDistance(unit, turret) <= turret.range+offset then
-					return true
-				end
-			end
-		end
-	end
-	return false
+  for i, turret in pairs(GetTurrets()) do
+    if turret ~= nil then
+      if turret.team ~= myHero.team then
+        if GetDistance(unit, turret) <= turret.range+offset then
+          return true
+        end
+      end
+    end
+  end
+  return false
 end
 -------------------------------------------------
 -------------------------------------------------
