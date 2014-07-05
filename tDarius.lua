@@ -88,7 +88,7 @@ function Init()
   --[TargetSelector]--
     ts      = TargetSelector(TARGET_LESS_CAST, 540, DAMAGE_PHYSICAL)
     ts.name = "Darius"
-  end
+end
   
 function Menu()  
         menu = scriptConfig("tDarius: Main Menu", "Darius")
