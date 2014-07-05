@@ -6,7 +6,7 @@ require 'VPrediction'
 
 --[AUTOUPDATER]--
 
-local version = "1.22"
+local version = "1.23"
 local author = "Teecolz"
 local scriptName = "tDarius"
 local AUTOUPDATE = true
@@ -58,6 +58,24 @@ local Wrange  = 210
 local Erange  = 540
 local Rrange  = 460
 
+--[[Credit Ryuk]]--
+champsToStun = {
+                { charName = "Katarina",        spellName = "KatarinaR" ,                  important = 0},
+                { charName = "Galio",           spellName = "GalioIdolOfDurand" ,          important = 0},
+                { charName = "FiddleSticks",    spellName = "Crowstorm" ,                  important = 0},
+                { charName = "FiddleSticks",    spellName = "DrainChannel" ,               important = 0},
+                { charName = "Nunu",            spellName = "AbsoluteZero" ,               important = 0},
+                { charName = "Shen",            spellName = "ShenStandUnited" ,            important = 0},
+                { charName = "Urgot",           spellName = "UrgotSwap2" ,                 important = 0},
+                { charName = "Malzahar",        spellName = "AlZaharNetherGrasp" ,         important = 0},
+                { charName = "Karthus",         spellName = "FallenOne" ,                  important = 0},
+                { charName = "Pantheon",        spellName = "PantheonRJump" ,              important = 0},
+                { charName = "Pantheon",        spellName = "PantheonRFall",               important = 0},
+                { charName = "Varus",           spellName = "VarusQ" ,                     important = 0},
+                { charName = "Caitlyn",         spellName = "CaitlynAceintheHole" ,        important = 0},
+                { charName = "MissFortune",     spellName = "MissFortuneBulletTime" ,      important = 0},
+                { charName = "Warwick",         spellName = "InfiniteDuress" ,             important = 0}
+}
 -------------------------------------------------
 -------------------------------------------------
 --[OnLoad]--
@@ -133,14 +151,15 @@ function Menu()
             menu.draw:addParam("drawQ", "Draw Q Range",   SCRIPT_PARAM_ONOFF, true)
             menu.draw:addParam("drawE", "Draw E Range",   SCRIPT_PARAM_ONOFF, true)
             menu.draw:addParam("drawR", "Draw R Range",   SCRIPT_PARAM_ONOFF, true)
-      menu.draw:addParam("drawRD", "Draw Ult/Health damage",   SCRIPT_PARAM_ONOFF, true)
+            menu.draw:addParam("drawRD", "Draw Ult/Health damage",   SCRIPT_PARAM_ONOFF, true)
             menu.draw:addParam("drawP", "Draw Passive damage",   SCRIPT_PARAM_ONOFF, true)
             menu.draw:addParam("aftercombo", "Draw after Combo", SCRIPT_PARAM_ONOFF, true)
-          menu.draw:addSubMenu("Killsteal", "killsteal")
+            menu.draw:addSubMenu("Killsteal", "killsteal")
             menu.draw.killsteal:addParam("RDraw", "Draw Enemys killed by R", SCRIPT_PARAM_ONOFF, true)
 
           menu:addSubMenu("tDarius: Extras", "extra")
             menu.extra:addParam("autolevel", "AutoLevel Spells", SCRIPT_PARAM_ONOFF, false)
+            menu.extra:addParam("interrupt", "Interrupt Important Spells with E", SCRIPT_PARAM_ONOFF, true)
             menu.extra:addParam("debug", "Debug", SCRIPT_PARAM_ONOFF, false)
 
       --[PermaShow]--
@@ -517,4 +536,22 @@ function GetMultiplier(stack)
 
   return 1 + stack/5
   
+end
+
+function OnProcessSpell(unit, spell)
+
+  if menu.extra.interrupt then
+    if unit.type == 'obj_AI_Hero' and unit.team == TEAM_ENEMY and GetDistance(unit) < Erange then
+        local spellName = spell.name
+      for i = 1, #champsToStun do
+        if unit.charName == champsToStun[i].charName and spellName == champsToStun[i].spellName then
+          if champsToStun[i].important == 0 then
+            if Eready and GetDistanceSqr(unit) > Erange^2 then
+              CastSpell(_E,unit.x,unit.z)
+            end
+          end
+        end
+      end
+    end
+  end
 end
