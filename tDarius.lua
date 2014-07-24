@@ -6,7 +6,7 @@ require 'VPrediction'
 
 --[AUTOUPDATER]--
 
-local version = "1.23"
+local version = "1.3"
 local author = "Teecolz"
 local scriptName = "tDarius"
 local AUTOUPDATE = true
@@ -103,9 +103,7 @@ end
 
 
 function Init()
-  --[TargetSelector]--
-    ts      = TargetSelector(TARGET_LESS_CAST, 540, DAMAGE_PHYSICAL)
-    ts.name = "Darius"
+    ts = TargetSelector(TARGET_LESS_CAST, 540, DAMAGE_PHYSICAL)
 end
   
 function Menu()  
@@ -128,6 +126,7 @@ function Menu()
           menu:addSubMenu("tDarius: Harass", "harass")
             menu.harass:addParam("harasskey", "Harass", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("C"))
             menu.harass:addParam("useQ", "Use Q-Spell", SCRIPT_PARAM_ONOFF, true)
+            menu.harass:addParam("autoQ", "Q Max Dmg Auto Harras", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("Y"))
             menu.harass:addParam("mana", "Dont Harass if mana < %", SCRIPT_PARAM_SLICE, 0, 0, 100)
             
           menu:addSubMenu("tDarius: Lane Clear", "lane")
@@ -155,16 +154,22 @@ function Menu()
             menu.draw:addParam("drawP", "Draw Passive damage",   SCRIPT_PARAM_ONOFF, true)
             menu.draw:addParam("aftercombo", "Draw after Combo", SCRIPT_PARAM_ONOFF, true)
             menu.draw:addSubMenu("Killsteal", "killsteal")
-            menu.draw.killsteal:addParam("RDraw", "Draw Enemys killed by R", SCRIPT_PARAM_ONOFF, true)
+              menu.draw.killsteal:addParam("RDraw", "Draw Enemys killed by R", SCRIPT_PARAM_ONOFF, true)
 
           menu:addSubMenu("tDarius: Extras", "extra")
-            menu.extra:addParam("autolevel", "AutoLevel Spells", SCRIPT_PARAM_ONOFF, false)
+            menu.extra:addParam("autolevel", "AutoLevel Spells (Requires F9)", SCRIPT_PARAM_ONOFF, false)
             menu.extra:addParam("interrupt", "Interrupt Important Spells with E", SCRIPT_PARAM_ONOFF, true)
             menu.extra:addParam("debug", "Debug", SCRIPT_PARAM_ONOFF, false)
+            
+          menu:addSubMenu("tDarius: Ult Blacklist", "ultb")
+            for i, enemy in pairs(GetEnemyHeroes()) do
+                  menu.ultb:addParam("UltBL"..i, "Use ult on: "..enemy.charName, SCRIPT_PARAM_ONOFF, true)
+            end
+  
 
-      --[PermaShow]--
       menu.combo:permaShow("combokey")
       menu.harass:permaShow("harasskey")
+      menu.harass:permaShow("autoQ")
 end
 
 -------------------------------------------------
@@ -199,6 +204,15 @@ function OnTick()
   end
   if menu.killsteal.killstealQ then
     killstealQ()
+  end
+
+  target = ts.target
+  if menu.harass.autoQ then
+    if menu.harass.mana < (myHero.mana / myHero.maxMana) * 100 then
+     if target and Qready and GetDistance(target) < 415 and GetDistance(target) > 270 then
+        CastSpell(_Q)
+      end  
+    end
   end
 end
 
@@ -236,16 +250,18 @@ function Combo()
         CastSpell(_E, AOECastPosition.x, AOECastPosition.z)
       end
     end
-    if RReady and menu.combo.useR then
-      for i, enemy in pairs(enemyTable) do
-        if enemy.object == target and GetDistance(target) < 460 then
-          local multiplier = GetMultiplier(enemy.stack)
-          local rDmg = multiplier * getDmg("R", target, myHero)
-          if target.health <= rDmg*(menu.combo.rBuffer/100) and not target.bInvulnerable then
-            CastSpell(_R, target)
+    if Rready and menu.combo.useR then
+        for i, enemy in pairs(enemyTable) do
+          if menu.ultb[enemy.charName] then
+           if enemy.object == target and GetDistance(target) < 460 then
+              local multiplier = GetMultiplier(enemy.stack)
+              local rDmg = multiplier * getDmg("R", target, myHero)
+              if target.health <= rDmg*(menu.combo.rBuffer/100) and not target.bInvulnerable then
+                CastSpell(_R, target)
+              end
+           end
           end
         end
-      end
     end
   end
 end
