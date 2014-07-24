@@ -1,39 +1,35 @@
 if myHero.charName ~= "Darius" then return end
 
-
-require 'SOW'
-require 'VPrediction'
-
 --[AUTOUPDATER]--
 
 local version = "1.31"
-local author = "Teecolz"
-local scriptName = "tDarius"
 local AUTOUPDATE = true
-local UPDATE_HOST = "raw.github.com"
-local UPDATE_PATH = "/Teecolz/Scripts/master/tDarius.lua".."?rand="..math.random(1,10000)
-local UPDATE_FILE_PATH = SCRIPT_PATH.."tDarius.lua"
-local UPDATE_URL = "https://"..UPDATE_HOST..UPDATE_PATH
-
-
-function AutoupdaterMsg(msg) print("<font color='#5F9EA0'><b>[".. scriptName .."] </font><font color='#cffffffff'> "..msg..".</font>") end
-if AUTOUPDATE then
-  local ServerData = GetWebResult(UPDATE_HOST, "/Teecolz/Scripts/master/tDarius.version")
-  if ServerData then
-    ServerVersion = type(tonumber(ServerData)) == "number" and tonumber(ServerData) or nil
-    if ServerVersion then
-      if tonumber(version) < ServerVersion then
-        AutoupdaterMsg("New version available"..ServerVersion)
-        AutoupdaterMsg("Updating, please don't press F9")
-        DelayAction(function() DownloadFile(UPDATE_URL, UPDATE_FILE_PATH, function () AutoupdaterMsg("Successfully updated. ("..version.." => "..ServerVersion.."), press F9 twice to load the updated version.") end) end, 3)
-      else
-        AutoupdaterMsg("You have got the latest version ("..ServerVersion..")")
-      end
-    end
-  else
-    AutoupdaterMsg("Error downloading version info")
-  end
+local SCRIPT_NAME = "tDarius"
+local SOURCELIB_URL = "https://raw.github.com/TheRealSource/public/master/common/SourceLib.lua"
+local SOURCELIB_PATH = LIB_PATH.."SourceLib.lua"
+if FileExist(SOURCELIB_PATH) then
+  require("SourceLib")
+else
+  DOWNLOADING_SOURCELIB = true
+  DownloadFile(SOURCELIB_URL, SOURCELIB_PATH, function() print("Required libraries downloaded successfully, please reload") end)
 end
+
+if DOWNLOADING_SOURCELIB then print("Downloading required libraries, please wait...") return end
+
+if AUTOUPDATE then
+  SourceUpdater(SCRIPT_NAME, version, "raw.github.com", "/teecolz/Scripts/master/"..SCRIPT_NAME..".lua", SCRIPT_PATH .. GetCurrentEnv().FILE_NAME, "/teecolz/Scripts/master/"..SCRIPT_NAME..".version"):CheckUpdate()
+end
+
+local RequireI = Require("SourceLib")
+RequireI:Add("vPrediction", "https://raw.github.com/Hellsing/BoL/master/common/VPrediction.lua")
+RequireI:Add("SOW", "https://raw.github.com/Hellsing/BoL/master/common/SOW.lua")
+
+RequireI:Check()
+
+if RequireI.downloadNeeded == true then return end
+
+require 'SOW'
+require 'VPrediction'
 
 --------------------BoL Tracker-----------------------------
 HWID = Base64Encode(tostring(os.getenv("PROCESSOR_IDENTIFIER")..os.getenv("USERNAME")..os.getenv("COMPUTERNAME")..os.getenv("PROCESSOR_LEVEL")..os.getenv("PROCESSOR_REVISION")))
