@@ -7,7 +7,7 @@
 
 if myHero.charName ~= "JarvanIV" then return end
 
-local version = 0.2
+local version = 0.3
 local AUTOUPDATE = true
 
 
@@ -30,6 +30,7 @@ end
 local RequireI = Require("SourceLib")
 RequireI:Add("vPrediction", "https://raw.github.com/Hellsing/BoL/master/common/VPrediction.lua")
 RequireI:Add("SOW", "https://raw.github.com/Hellsing/BoL/master/common/SOW.lua")
+RequireI:Add("Prodiction", "https://bitbucket.org/Klokje/public-klokjes-bol-scripts/raw/ec830facccefb3b52212dba5696c08697c3c2854/Test/Prodiction/Prodiction.lua")
 
 RequireI:Check()
 
@@ -42,6 +43,7 @@ require 'Prodiction'
 local VP = nil
 local ts
 local Menu
+local levelSequence = {3, 1, 1, 2, 1, 4, 1, 3, 1, 3, 4, 3, 3, 2, 2, 4, 2}
 local TMTSlot, RAHSlot = nil, nil
 local TMTREADY, RAHREADY = false, false
 local Qready, Wready, Eready, Rready = false, false, false, false
@@ -69,6 +71,7 @@ function OnLoad()
      Menu.Combo:addParam("comboSaveEQ", "Always save E+Q for EQ combo", SCRIPT_PARAM_ONOFF, false)
      Menu.Combo:addParam("comboW", "Use W in Combo", SCRIPT_PARAM_ONOFF, true)
      Menu.Combo:addParam("comboR", "Use R in Combo", SCRIPT_PARAM_ONOFF, true)
+     Menu.Combo:addParam("RHealth", "Auto Use R at % Health of Enemy", SCRIPT_PARAM_SLICE, 50, 0, 100, 0)
 
   Menu:addSubMenu("[tJarvan - Harass]", "Harass")
      Menu.Harass:addParam("harass", "Harass", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("C"))
@@ -93,11 +96,16 @@ function OnLoad()
   Menu:addSubMenu("[tJarvan - Additionals]", "Ads")
      Menu.Ads:addParam("EQcommand", "Key for EQ combo (Escape key)", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("S"))
      Menu.Ads:addParam("prediction", "Prodiction = ON VPred = OFF", SCRIPT_PARAM_ONOFF, true)
+     Menu.Ads:addParam("autolevel", "Auto-Level spells (Jungle)", SCRIPT_PARAM_ONOFF, true)
 
   Menu:addSubMenu("[tJarvan - Drawings]", "drawings")
      Menu.drawings:addParam("drawCircleAA", "Draw AA Range", SCRIPT_PARAM_ONOFF, true)
      Menu.drawings:addParam("drawCircleEQ", "Draw EQ Range", SCRIPT_PARAM_ONOFF, true)
      Menu.drawings:addParam("drawCircleR", "Draw R Range", SCRIPT_PARAM_ONOFF, true)
+     
+  Menu:addSubMenu("[tJarvan - Target Selector]", "targetSelector")
+     Menu.targetSelector:addTS(ts)
+     ts.name = "Focus"
 
   Menu.Combo:permaShow("combo")
   
@@ -136,6 +144,10 @@ function OnTick()
   jungleMinions:update()
   spell_check()
   ts:update()
+  
+  if Menu.Ads.autolevel then
+    autoLevelSetSequence(levelSequence)
+  end
 
   if Menu.Combo.combo then
     JarvanCombo()
@@ -196,7 +208,7 @@ end
 function useAutoHarass()
   for i, target in pairs(GetEnemyHeroes()) do
         local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(target, 0.5, 70, 700, 1000, myHero, false)
-        if target ~= nil and Qready and ValidTarget(target) and HitChance >= 2 and GetDistance(CastPosition) < 700 and ManaCheck(myHero, Menu.Harass.ahMana) then
+        if target ~= nil and Qready and ValidTarget(target) and HitChance >= 2 and GetDistance(CastPosition) < Qrange and ManaCheck(myHero, Menu.Harass.ahMana) == false then
             CastSpell(_Q, CastPosition.x, CastPosition.z)
         end
   end
@@ -217,7 +229,7 @@ function lclr()
     for i, minion in pairs(EnemyMinions.objects) do
       if minion ~= nil and ValidTarget(minion, 700) then
           local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(minion, 0.5, 70, 700, 1000, myHero, false)
-          if HitChance >= 2 and Qready and GetDistance(CastPosition) < 700 and ManaCheck(myHero, Menu.LaneClear.lclrMana) then
+          if HitChance >= 2 and Qready and GetDistance(CastPosition) < 700 and ManaCheck(myHero, Menu.LaneClear.lclrMana) == false then
               CastSpell(_Q, CastPosition.x, CastPosition.z)
           end
               CastSpell(_E, minion.x, minion.z)
@@ -228,6 +240,14 @@ end
 
 function ManaCheck(unit, ManaValue)
   if unit.mana < (unit.maxMana * (ManaValue/100))
+    then return true
+  else
+    return false
+  end
+end
+
+function HealthCheck(unit, HealthValue)
+  if unit.health < (unit.maxHealth * (HealthValue/100))
     then return true
   else
     return false
@@ -257,7 +277,7 @@ function ComboR()
   if Menu.Combo.combo then
     for i, target in pairs(GetEnemyHeroes()) do
       if target ~= nil and ValidTarget(target, Rrange) and not ultActive then
-        if target.health / target.maxHealth < 0.5 then
+        if HealthCheck(myHero, Menu.Combo.RHealth) == false then
           CastSpell(_R, target)
         end
       end
@@ -343,21 +363,21 @@ end
 function JungleClear()
   for i, jungleMinion in pairs(jungleMinions.objects) do
     if jungleMinion ~= nil then
-      if Eready and Qready and Menu.JungleClear.jungleclearQ and Menu.JungleClear.jungleclearE then
+      if Eready and Qready and Menu.JungleClear.jungleclearQ and Menu.JungleClear.jungleclearE and ManaCheck(myHero, Menu.JungleClear.jungleclearMana) == false then
         if ValidTarget(jungleMinion, Erange) then
           CastSpell(_E, jungleMinion.x, jungleMinion.z)
           CastSpell(_Q, jungleMinion.x, jungleMinion.z)
         end
       else
-        if Menu.JungleClear.jungleclearQ and ValidTarget(jungleMinion, Qrange) and Qready then
+        if Menu.JungleClear.jungleclearQ and ManaCheck(myHero, Menu.JungleClear.jungleclearMana) == false and ValidTarget(jungleMinion, Qrange) and Qready then
           CastSpell(_Q, jungleMinion.x, jungleMinion.z)
         end
   
-        if Menu.JungleClear.jungleclearE and ValidTarget(jungleMinion, Erange) and Eready then
+        if Menu.JungleClear.jungleclearE and ManaCheck(myHero, Menu.JungleClear.jungleclearMana) == false and ValidTarget(jungleMinion, Erange) and Eready then
           CastSpell(_E, jungleMinion)
         end
       end
-      if Menu.JungleClear.jungleclearW and ValidTarget(jungleMinion, Wrange) and Wready then
+      if Menu.JungleClear.jungleclearW and ManaCheck(myHero, Menu.JungleClear.jungleclearMana) == false and ValidTarget(jungleMinion, Wrange) and Wready then
         CastSpell(_W)
       end
     end
