@@ -2,7 +2,7 @@ if myHero.charName ~= "Darius" then return end
 
 --[AUTOUPDATER]--
 
-local version = "1.31"
+local version = "1.4"
 local AUTOUPDATE = true
 local SCRIPT_NAME = "tDarius"
 local SOURCELIB_URL = "https://raw.github.com/TheRealSource/public/master/common/SourceLib.lua"
@@ -130,7 +130,7 @@ function Menu()
           menu:addSubMenu("tDarius: Harass", "harass")
             menu.harass:addParam("harasskey", "Harass", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("C"))
             menu.harass:addParam("useQ", "Use Q-Spell", SCRIPT_PARAM_ONOFF, true)
-            menu.harass:addParam("autoQ", "Q Max Dmg Auto Harras", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("Y"))
+            menu.harass:addParam("autoQ", "Q Max Dmg Auto Harras", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("Y")) -- I suggest you to add an option to automagically disable this under turret ;) unless turret focus on another ally (or already on me) I'm not sure, but I think that requires packets though. check it please ;p
             menu.harass:addParam("mana", "Dont Harass if mana < %", SCRIPT_PARAM_SLICE, 0, 0, 100)
             
           menu:addSubMenu("tDarius: Lane Clear", "lane")
@@ -167,7 +167,7 @@ function Menu()
             
           menu:addSubMenu("tDarius: Ult Blacklist", "ultb")
             for i, enemy in pairs(GetEnemyHeroes()) do
-                  menu.ultb:addParam("UltBL"..i, "Use ult on: "..enemy.charName, SCRIPT_PARAM_ONOFF, true)
+                  menu.ultb:addParam(enemy.charName, "Use ult on: "..enemy.charName, SCRIPT_PARAM_ONOFF, true)
             end
   
 
@@ -203,14 +203,14 @@ function OnTick()
   if menu.jungle.junglekey then
     JungleClear()
   end
-  if menu.killsteal.killstealR then
+  if menu.killsteal.killstealR and Rready then
     killstealR()
   end
   if menu.killsteal.killstealQ then
     killstealQ()
   end
 
-  target = ts.target
+  local target = ts.target
   if menu.harass.autoQ then
     if menu.harass.mana < (myHero.mana / myHero.maxMana) * 100 then
      if target and Qready and GetDistance(target) < 405 and GetDistance(target) > 270 then
@@ -233,6 +233,14 @@ function spell_check()
   Rready = (myHero:CanUseSpell(_R) == READY)
 end
 
+function blCheck(target)
+  if target ~= nil and menu.ultb[target.charName] then
+    return true
+  else
+    return false
+  end
+end
+
 -------------------------------------------------
 -------------------------------------------------
 --[Combo]--
@@ -240,7 +248,7 @@ function Combo()
   local Enemies = GetEnemyHeroes
   local target  = ts.target
 
-  if menu.combo.combokey and ts.target then
+  if ts.target then
     if menu.combo.useITEM and TMTREADY and GetDistance(target) < 275 then CastSpell(TMTSlot) end
     if menu.combo.useITEM and RAHREADY and GetDistance(target) < 275 then CastSpell(RAHSlot) end
     if target and menu.combo.useQ and menu.combo.qoptions.qmax and Qready and GetDistance(target) < 425 and GetDistance(target) > 270 then
@@ -250,17 +258,18 @@ function Combo()
        end
     if target and menu.combo.useE and GetDistanceSqr(target) <= 291600 and Eready then
       local AOECastPosition, MainTargetHitChance, nTargets = VP:GetLineAOECastPosition(target, 0.5, 225, Erange, 1500, myHero, false)
-      if nTargets >= 1 and GetDistance(AOECastPosition) <= Erange then
+      if nTargets >= 1 and GetDistance(AOECastPosition) <= Erange and GetDistance(AOECastPosition) >= 250 then
         CastSpell(_E, AOECastPosition.x, AOECastPosition.z)
       end
     end
     if Rready and menu.combo.useR then
+      if blCheck(target) then
         for i, enemy in pairs(enemyTable) do
-          if menu.ultb[enemy.charName] then
            if enemy.object == target and GetDistance(target) < 460 then
               local multiplier = GetMultiplier(enemy.stack)
               local rDmg = multiplier * getDmg("R", target, myHero)
-              if target.health <= rDmg*(menu.combo.rBuffer/100) and not target.bInvulnerable then
+              if target.health <= rDmg*(menu.combo.rBuffer/100) then
+                if menu.extra.debug then print("Combo ult casted") end
                 CastSpell(_R, target)
               end
            end
@@ -434,12 +443,17 @@ end
 -------------------------------------------------
 --[KillSteal]--
 function killstealR()
+if menu.killsteal.killstealR then -- why even bother checking the rest and calculating dmg if killstealR is off ;)
   for i, enemy in pairs(enemyTable) do
-    if GetDistance(enemy.object) < 460 then
-      local multiplier = GetMultiplier(enemy.stack)
-      local rDmg = multiplier * getDmg("R", enemy.object, myHero)
-      if enemy.object.health <= rDmg*(menu.combo.rBuffer/100) and menu.killsteal.killstealR then
-        CastSpell(_R, enemy.object)
+     if GetDistance(enemy.object) < 460 then
+          if blCheck(enemy.object) then
+       local multiplier = GetMultiplier(enemy.stack)
+       local rDmg = multiplier * getDmg("R", enemy.object, myHero)
+       if enemy.object.health <= rDmg*(menu.combo.rBuffer/100) then
+         if menu.extra.debug then print("Combo ult casted") end
+         CastSpell(_R, enemy.object)
+       end
+       end
       end
     end
   end
