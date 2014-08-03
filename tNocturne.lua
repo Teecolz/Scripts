@@ -173,6 +173,10 @@ function OnTick()
   if menu.jungle.junglekey then
     JungleClear()
   end
+  
+  if menu.killsteal.killstealQ then
+    killsteal()
+  end
 
 end
 
@@ -231,6 +235,16 @@ function ManaCheck(unit, ManaValue)
     then return true
   else
     return false
+  end
+end
+
+function killsteal()
+  for i, enemy in ipairs (GetEnemyHeroes()) do
+    qDmg = getDmg("Q", enemy, myHero)
+    local pos, info = Prodiction.GetPrediction(enemy, Qrange, Qspeed, Qdelay, Qwidth)
+    if Qready and enemy ~= nil and ValidTarget(enemy, Qrange) and enemy.health < qDmg then
+        CastSpell(_Q, pos.x, pos.z)
+    end
   end
 end
 
