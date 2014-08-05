@@ -191,6 +191,7 @@ function OnTick()
   if myHero.dead then return end
   ts:update()
   EnemyMinions:update()
+  jungleMinions:update()
   spell_check()
   if menu.extra.autolevel then
     autoLevelSetSequence(levelSequence)
