@@ -2,7 +2,7 @@ if myHero.charName ~= "Darius" then return end
 
 --[AUTOUPDATER]--
 
-local version = "1.4"
+local version = "1.41"
 local AUTOUPDATE = true
 local SCRIPT_NAME = "tDarius"
 local SOURCELIB_URL = "https://raw.github.com/TheRealSource/public/master/common/SourceLib.lua"
@@ -213,7 +213,7 @@ function OnTick()
   local target = ts.target
   if menu.harass.autoQ then
     if menu.harass.mana < (myHero.mana / myHero.maxMana) * 100 then
-     if target and Qready and GetDistance(target) < 405 and GetDistance(target) > 270 then
+     if target and not UnitAtTower(target, 0) and Qready and GetDistance(target) < 405 and GetDistance(target) > 270 then
         CastSpell(_Q)
       end  
     end
@@ -588,6 +588,19 @@ function OnProcessSpell(unit, spell)
       end
     end
   end
+end
+
+function UnitAtTower(unit,offset)
+  for i, turret in pairs(GetTurrets()) do
+    if turret ~= nil then
+      if turret.team ~= myHero.team then
+        if GetDistance(unit, turret) <= turret.range+offset then
+          return true
+        end
+      end
+    end
+  end
+  return false
 end
 
 function OnBugsplat()
