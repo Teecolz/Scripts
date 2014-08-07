@@ -1,7 +1,7 @@
 if myHero.charName ~= "Aatrox" then return end
 
 local version = 1.01
-local AUTOUPDATE = false
+local AUTOUPDATE = true
 
 
 local SCRIPT_NAME = "tAatrox"
