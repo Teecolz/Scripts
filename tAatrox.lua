@@ -1,7 +1,7 @@
 if myHero.charName ~= "Aatrox" then return end
 
-local version = 1.0
-local AUTOUPDATE = true
+local version = 1.01
+local AUTOUPDATE = false
 
 
 local SCRIPT_NAME = "tAatrox"
@@ -138,7 +138,7 @@ function Menu()
             menu.combo:addParam("maxW", "Max HP % to Toggle W", SCRIPT_PARAM_SLICE, 80, 0, 100, -1)
             menu.combo:addParam("useE", "Use E-Spell",  SCRIPT_PARAM_ONOFF, true)
             menu.combo:addParam("useR", "Use R-Spell",  SCRIPT_PARAM_ONOFF, true)
-            menu.combo:addParam("minR", "Minimum Enemies to use R",  SCRIPT_PARAM_SLICE, 2, 1, 5, -1)
+            menu.combo:addParam("minR", "Minimum Enemies to use R",  SCRIPT_PARAM_SLICE, 2, 0, 5, 0)
             menu.combo:addParam("items", "Use Items in combo",  SCRIPT_PARAM_ONOFF, true)
 
           menu:addSubMenu("tAatrox: Harass", "harass")
@@ -176,7 +176,7 @@ function Menu()
           menu:addSubMenu("tAatrox: Escape", "escape")
             menu.escape:addParam("escapekey", "Escape", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("S"))
             
-          menu:addSubMenu("tAatrox - Target Selector", "targetSelector")
+          menu:addSubMenu("tAatrox: Target Selector", "targetSelector")
             menu.targetSelector:addTS(ts)
             ts.name = "Focus"
 
