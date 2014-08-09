@@ -7,7 +7,7 @@
 
 if myHero.charName ~= "JarvanIV" then return end
 
-local version = 0.3
+local version = 0.4
 local AUTOUPDATE = true
 
 
@@ -83,6 +83,7 @@ function OnLoad()
      Menu.Combo:addParam("comboW", "Use W in Combo", SCRIPT_PARAM_ONOFF, true)
      Menu.Combo:addParam("comboR", "Use R in Combo", SCRIPT_PARAM_ONOFF, true)
      Menu.Combo:addParam("RHealth", "Auto Use R at % Health of Enemy", SCRIPT_PARAM_SLICE, 50, 0, 100, 0)
+     Menu.Combo:addParam("minR", "Auto Ultimate if can hit X enemies",  SCRIPT_PARAM_SLICE, 2, 0, 5, 0)
 
   Menu:addSubMenu("[tJarvan - Harass]", "Harass")
      Menu.Harass:addParam("harass", "Harass", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("C"))
@@ -192,6 +193,8 @@ function OnTick()
   
   killsteal()
   
+  AutoUlt()
+  
 end
 
 function spell_check()
@@ -263,6 +266,26 @@ function HealthCheck(unit, HealthValue)
   else
     return false
   end
+end
+
+function AutoUlt()
+  for i, enemy in ipairs(GetEnemyHeroes()) do
+      if enemy ~= nil and GetDistance(enemy) < Rrange and not ultActive then
+        if CountEnemies(Rwidth, enemy) >= Menu.Combo.minR then
+          CastSpell(_R, enemy)
+        end
+      end
+  end
+end
+
+function CountEnemies(range, unit)
+    local Enemies = 0
+    for _, enemy in ipairs(GetEnemyHeroes()) do
+        if ValidTarget(enemy) and GetDistance(enemy, unit) < (range or math.huge) then
+            Enemies = Enemies + 1
+        end
+    end
+    return Enemies
 end
 
 function JarvanCombo()
