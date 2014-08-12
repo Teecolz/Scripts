@@ -2,7 +2,7 @@ if myHero.charName ~= "Darius" then return end
 
 --[AUTOUPDATER]--
 
-local version = "1.41"
+local version = "1.42"
 local AUTOUPDATE = true
 local SCRIPT_NAME = "tDarius"
 local SOURCELIB_URL = "https://raw.github.com/TheRealSource/public/master/common/SourceLib.lua"
@@ -123,6 +123,7 @@ function Menu()
             menu.combo.qoptions:addParam("qmax", "Only use Q at max damage", SCRIPT_PARAM_ONOFF, false)
             menu.combo:addParam("useW", "Use W-Spell",  SCRIPT_PARAM_ONOFF, true)
             menu.combo:addParam("useE", "Use E-Spell",  SCRIPT_PARAM_ONOFF, true)
+            menu.combo:addParam("minE", "Min E Range", SCRIPT_PARAM_SLICE, 0, 0, 300)
             menu.combo:addParam("useR", "Use R-Spell",  SCRIPT_PARAM_ONOFF, true)
             menu.combo:addParam("useITEM", "Use Items",  SCRIPT_PARAM_ONOFF, true)
             menu.combo:addParam("rBuffer", "R% to ult at",SCRIPT_PARAM_SLICE, 100, 0, 100, 2)
@@ -256,7 +257,7 @@ function Combo()
        elseif target and menu.combo.useQ and GetDistanceSqr(target) <= 180625 and Qready then
           CastSpell(_Q)
        end
-    if target and menu.combo.useE and GetDistanceSqr(target) <= 291600 and Eready then
+    if menu.combo.useE and target and GetDistance(target) > menu.combo.minE and GetDistanceSqr(target) <= 291600 and Eready then 
       local AOECastPosition, MainTargetHitChance, nTargets = VP:GetLineAOECastPosition(target, 0.5, 225, Erange, 1500, myHero, false)
       if nTargets >= 1 and GetDistance(AOECastPosition) <= Erange and GetDistance(AOECastPosition) >= 250 then
         CastSpell(_E, AOECastPosition.x, AOECastPosition.z)
