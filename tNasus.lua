@@ -5,49 +5,96 @@
   
   ]]
 
-local version    = 1.0
-local autoUpdate = false
-
 if myHero.charName ~= "Nasus" or not VIP_USER then return end
+
+local version = 1.0
+local AUTOUPDATE = true
 
 require "SOW"
 require "VPrediction"
+require "Sourcelib"
 
---[[-------------Updater-------------
 
-local UPDATE_HOST      = "bitbucket.org"
-local UPDATE_PATH      = "/Hellsing/botoflegends/raw/master/PerfectQ.lua"
-local UPDATE_FILE_PATH = SCRIPT_PATH..GetCurrentEnv().FILE_NAME
-local UPDATE_URL       = "https://"..UPDATE_HOST..UPDATE_PATH
-local SCRIPT_NAME      = "PerfectQ"
+local SCRIPT_NAME = "tNasus"
+local SOURCELIB_URL = "https://raw.github.com/TheRealSource/public/master/common/SourceLib.lua"
+local SOURCELIB_PATH = LIB_PATH.."SourceLib.lua"
+if FileExist(SOURCELIB_PATH) then
+  require("SourceLib")
+else
+  DOWNLOADING_SOURCELIB = true
+  DownloadFile(SOURCELIB_URL, SOURCELIB_PATH, function() print("Required libraries downloaded successfully, please reload") end)
+end
 
-local webResult = nil
-if autoUpdate then
-    DelayAction(function() GetAsyncWebResult(UPDATE_HOST, UPDATE_PATH, function(data) webResult = data end) end, 3)
-    function updateScript()
-        if webResult then
-            local serverVersion
-            local startPos, endPos, junk = nil, nil, nil
-            junk, startPos = string.find(webResult, "local version    = ")
-            if startPos then
-                endPos, junk = string.find(webResult, "\n", startPos)
-            end
-            if endPos then
-                serverVersion = tonumber(string.sub(webResult, startPos, endPos))
-            end
-            if serverVersion and serverVersion > version then
-                DownloadFile(UPDATE_URL.."?nocache"..myHero.charName..os.clock(), UPDATE_FILE_PATH, function () print("<font color=\"#8080F0\">"..SCRIPT_NAME..": Successfully updated. (v"..version.." -> v"..serverVersion..")</font>") end)
-            elseif not serverVersion then
-                print("<font color=\"#8080F0\">"..SCRIPT_NAME..": Something went wrong! Please manually update the script!</font>")
-            end
-            webResult = nil
-        end
-    end
-    AddTickCallback(updateScript)
-end]]
+if DOWNLOADING_SOURCELIB then print("Downloading required libraries, please wait...") return end
 
------------ JungleLib -----------
+if AUTOUPDATE then
+  SourceUpdater(SCRIPT_NAME, version, "raw.github.com", "/teecolz/Scripts/master/"..SCRIPT_NAME..".lua", SCRIPT_PATH .. GetCurrentEnv().FILE_NAME, "/teecolz/Scripts/master/"..SCRIPT_NAME..".version"):CheckUpdate()
+end
 
+local RequireI = Require("SourceLib")
+RequireI:Add("vPrediction", "https://raw.github.com/Hellsing/BoL/master/common/VPrediction.lua")
+RequireI:Add("SOW", "https://raw.github.com/Hellsing/BoL/master/common/SOW.lua")
+
+RequireI:Check()
+
+if RequireI.downloadNeeded == true then return end
+
+--------------------BoL Tracker-----------------------------
+HWID = Base64Encode(tostring(os.getenv("PROCESSOR_IDENTIFIER")..os.getenv("USERNAME")..os.getenv("COMPUTERNAME")..os.getenv("PROCESSOR_LEVEL")..os.getenv("PROCESSOR_REVISION")))
+-- DO NOT CHANGE. This is set to your proper ID.
+id = 15
+ScriptName = "tNasus"
+
+-- Thank you to Roach and Bilbao for the support!
+assert(load(Base64Decode("G0x1YVIAAQQEBAgAGZMNChoKAAAAAAAAAAAAAQIDAAAAJQAAAAgAAIAfAIAAAQAAAAQKAAAAVXBkYXRlV2ViAAEAAAACAAAADAAAAAQAETUAAAAGAUAAQUEAAB2BAAFGgUAAh8FAAp0BgABdgQAAjAHBAgFCAQBBggEAnUEAAhsAAAAXwAOAjMHBAgECAgBAAgABgUICAMACgAEBgwIARsNCAEcDwwaAA4AAwUMDAAGEAwBdgwACgcMDABaCAwSdQYABF4ADgIzBwQIBAgQAQAIAAYFCAgDAAoABAYMCAEbDQgBHA8MGgAOAAMFDAwABhAMAXYMAAoHDAwAWggMEnUGAAYwBxQIBQgUAnQGBAQgAgokIwAGJCICBiIyBxQKdQQABHwCAABcAAAAECAAAAHJlcXVpcmUABAcAAABzb2NrZXQABAcAAABhc3NlcnQABAQAAAB0Y3AABAgAAABjb25uZWN0AAQQAAAAYm9sLXRyYWNrZXIuY29tAAMAAAAAAABUQAQFAAAAc2VuZAAEGAAAAEdFVCAvcmVzdC9uZXdwbGF5ZXI/aWQ9AAQHAAAAJmh3aWQ9AAQNAAAAJnNjcmlwdE5hbWU9AAQHAAAAc3RyaW5nAAQFAAAAZ3N1YgAEDQAAAFteMC05QS1aYS16XQAEAQAAAAAEJQAAACBIVFRQLzEuMA0KSG9zdDogYm9sLXRyYWNrZXIuY29tDQoNCgAEGwAAAEdFVCAvcmVzdC9kZWxldGVwbGF5ZXI/aWQ9AAQCAAAAcwAEBwAAAHN0YXR1cwAECAAAAHBhcnRpYWwABAgAAAByZWNlaXZlAAQDAAAAKmEABAYAAABjbG9zZQAAAAAAAQAAAAAAEAAAAEBvYmZ1c2NhdGVkLmx1YQA1AAAAAgAAAAIAAAACAAAAAgAAAAIAAAACAAAAAgAAAAMAAAADAAAAAwAAAAMAAAAEAAAABAAAAAUAAAAFAAAABQAAAAYAAAAGAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAABwAAAAgAAAAHAAAABQAAAAgAAAAJAAAACQAAAAkAAAAKAAAACgAAAAsAAAALAAAACwAAAAsAAAALAAAACwAAAAsAAAAMAAAACwAAAAkAAAAMAAAADAAAAAwAAAAMAAAADAAAAAwAAAAMAAAADAAAAAwAAAAGAAAAAgAAAGEAAAAAADUAAAACAAAAYgAAAAAANQAAAAIAAABjAAAAAAA1AAAAAgAAAGQAAAAAADUAAAADAAAAX2EAAwAAADUAAAADAAAAYWEABwAAADUAAAABAAAABQAAAF9FTlYAAQAAAAEAEAAAAEBvYmZ1c2NhdGVkLmx1YQADAAAADAAAAAIAAAAMAAAAAAAAAAEAAAAFAAAAX0VOVgA="), nil, "bt", _ENV))()
+-------------------------------------------------
+
+DashList = {
+        ['Ahri']        = {true, spell = 'AhriTumble'},
+        ['Aatrox']      = {true, spell = 'AatroxQ'},
+        ['Akali']       = {true, spell = 'AkaliShadowDance'}, -- Targeted ability
+        ['Alistar']     = {true, spell = 'Headbutt'}, -- Targeted ability
+        ['Corki']       = {true, spell = 'CarpetBomb'},
+        ['Diana']       = {true, spell = 'DianaTeleport'}, -- Targeted ability
+        ['Elise']       = {true, spell = 'EliseSpiderQCast'}, -- Targeted ability
+        ['Fiora']       = {true, spell = 'FioraQ'}, -- Targeted ability
+        ['Fizz']      = {true, spell = 'FizzPiercingStrike'}, -- Targeted ability
+        ['Gragas']      = {true, spell = 'GragasE'},
+        ['Graves']      = {true, spell = 'GravesMove'},
+        ['Hecarim']     = {true, spell = 'HecarimUlt'},
+        ['Irelia']      = {true, spell = 'IreliaGatotsu'}, -- Targeted ability
+        ['JarvanIV']    = {true, spell = 'jarvanAddition'}, -- Skillshot/Targeted ability
+        ['Jax']         = {true, spell = 'JaxLeapStrike'}, -- Targeted ability
+        ['Jayce']       = {true, spell = 'JayceToTheSkies'}, -- Targeted ability
+        ['Kassadin']    = {true, spell = 'RiftWalk'},
+        ['Khazix']      = {true, spell = 'KhazixW'},
+        ['Leblanc']     = {true, spell = 'LeblancSlide'},
+        ['LeeSin']      = {true, spell = 'blindmonkqtwo'},
+        ['Leona']       = {true, spell = 'LeonaZenithBlade'},
+        ['Lucian']      = {true, spell = 'LucianE'},
+        ['Malphite']    = {true, spell = 'UFSlash'},
+        ['Maokai']      = {true, spell = 'MaokaiTrunkLine',}, -- Targeted ability 
+    ['MasterYi']    = {true, spell = 'AlphaStrike',}, -- Targeted
+        ['MonkeyKing']  = {true, spell = 'MonkeyKingNimbus'}, -- Targeted ability
+        ['Nidalee']     = {true, spell = 'Pounce'},
+        ['Pantheon']    = {true, spell = 'PantheonW'}, -- Targeted ability
+        ['Pantheon']    = {true, spell = 'PantheonRJump'},
+        ['Pantheon']    = {true, spell = 'PantheonRFall'},
+        ['Poppy']       = {true, spell = 'PoppyHeroicCharge'}, -- Targeted ability
+      --['Quinn']       = {true, spell = 'QuinnE',                  range = 725,   projSpeed = 2000, }, -- Targeted ability
+        ['Rammus']      = {true, spell = 'PowerBall'},
+        ['Renekton']    = {true, spell = 'RenektonSliceAndDice'},
+        ['Riven']     = {true, spell = 'RivenFeint'},
+        ['Sejuani']     = {true, spell = 'SejuaniArcticAssault'},
+        ['Shyvana']     = {true, spell = 'ShyvanaTransformCast'},
+        ['Shen']        = {true, spell = 'ShenShadowDash'},
+        ['Talon']       = {true, spell = 'TalonCutthroat'},
+        ['Tristana']    = {true, spell = 'RocketJump'},
+        ['Tryndamere']  = {true, spell = 'Slash'},
+        ['Vi']      = {true, spell = 'ViQ'},
+        ['XinZhao']     = {true, spell = 'XenZhaoSweep'}, -- Targeted ability
+        ['Yasuo']       = {true, spell = 'YasuoDashWrapper'} -- Targeted ability
+}
 
 ------------ Globals ------------
 
@@ -100,6 +147,9 @@ function OnLoad()
             jungleLib = JungleLib()
         end
     )
+    
+    UpdateWeb(true, ScriptName, id, HWID)
+    
 
   --[TargetSelector]--
     ts = TargetSelector(TARGET_LOW_HP, 600)
@@ -110,22 +160,24 @@ function OnLoad()
     enemyMinions = minionManager(MINION_ENEMY, 1000, player, MINION_SORT_MAXHEALTH_DEC)
 
     -- Menu
-    menu = scriptConfig("tNasus", player.charName)
+    menu = scriptConfig("tNasus", "tNasus")
 
     menu:addSubMenu("tNasus: Orbwalk", "Orbwalk")
       iSOW:LoadToMenu(menu.Orbwalk)
             
-    menu:addSubMenu("Masteries", "masteries")
+    menu:addSubMenu("tNasus: Masteries", "masteries")
         menu.masteries:addParam("butcher", "Butcher",      SCRIPT_PARAM_SLICE, 0, 0, 1, 0)
         menu.masteries:addParam("arcane",  "Arcane Blade", SCRIPT_PARAM_SLICE, 0, 0, 1, 0)
         menu.masteries:addParam("havoc",   "Havoc",        SCRIPT_PARAM_SLICE, 0, 0, 1, 0)
         
-    menu:addSubMenu("Combo settins", "comboset")
+    menu:addSubMenu("tNasus: Combo settins", "comboset")
+        menu.comboset:addParam("autoR", "Auto Ult", SCRIPT_PARAM_ONOFF, true)
         menu.comboset:addParam("minR", "Auto Ult when X enemies in range", SCRIPT_PARAM_SLICE, 1, 0, 5, 0)
         menu.comboset:addParam("ks", "KS with Q and E", SCRIPT_PARAM_ONOFF, true)
+        menu.comboset:addParam("gapClose", "Auto W Gapclosers", SCRIPT_PARAM_ONOFF, true)
 
-    menu:addSubMenu("Jungle Farm Settings", "jungle")
-        menu.jungle:addParam("active",  "Farm jungle",             SCRIPT_PARAM_ONKEYDOWN, false, string.byte("X"))
+    menu:addSubMenu("tNasus: Jungle Farm Settings", "jungle")
+        menu.jungle:addParam("active",  "Farm jungle",             SCRIPT_PARAM_ONKEYDOWN, false, string.byte("N"))
         menu.jungle:addParam("orbwalk", "Orbwalk while farming",   SCRIPT_PARAM_ONOFF,     true)
         menu.jungle:addParam("sep",     "",                        SCRIPT_PARAM_INFO,      "")
         menu.jungle:addParam("smart",   "Smart combo (Smite + Q)", SCRIPT_PARAM_ONOFF,     true)
@@ -143,7 +195,7 @@ function OnLoad()
 
     menu:addParam("sep",         "",                                 SCRIPT_PARAM_INFO,        "")
     menu:addParam("sep",         "",                                 SCRIPT_PARAM_INFO,        "")
-    menu:addParam("disabled",    "Disable script",                   SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("J"))
+    menu:addParam("disabled",    "Disable Stacking (Set to combo button)",       SCRIPT_PARAM_ONKEYDOWN, false, string.byte("T"))
     menu:addParam("sep",         "",                                 SCRIPT_PARAM_INFO,        "")
     menu:addParam("drawRange",   "Draw auto-attack range",           SCRIPT_PARAM_ONOFF,       true)
     menu:addParam("drawIndic",   "Draw damage indicator on enemies", SCRIPT_PARAM_ONOFF,       true)
@@ -152,6 +204,9 @@ function OnLoad()
     menu:addParam("version",     "Installed Version:",               SCRIPT_PARAM_INFO,        version)
     menu:addParam("combo", "Combo", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("T"))
     menu:addParam("escape", "Escape", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("S"))
+    
+    PrintChat("<font color=\"#0DF8FF\">tNasus Loaded Successfully (Credit to Hellsing)</font> ")
+    
 
 end
 
@@ -184,13 +239,13 @@ function OnTick()
     end
     
   -- Combo shit
-  if ts.target ~= nil and ValidTarget(ts.target) and menu.combo then
+  if menu.combo then
     combo()
   end
   
   if menu.escape then escape() end
   
-  if Rready then autoult() end
+  if Rready and menu.comboset.autoR then autoult() end
   
   if menu.comboset.ks then ks() end
     
@@ -221,33 +276,29 @@ function OnTick()
 end
 
 function combo()
+  local enemy = ts.target
+  if enemy == nil then return end
 
-    if Wready and ValidTarget(ts.target, 600) then
-      CastSpell(_W, ts.target)
+    if Wready and GetDistance(enemy) < 600 then
+      CastSpell(_W, enemy)
     end
 
-    if Eready and ValidTarget(ts.target, 650) then
-      CastSpell(_E, ts.target.x,ts.target.z)
+    if Eready and GetDistance(enemy) < 650 then
+      CastSpell(_E, enemy.x, enemy.z)
     end
 
-    if Qready and ValidTarget(ts.target, 125) then
+    if Qready and GetDistance(enemy) < 350 then
       CastSpell(_Q)
-      myHero:Attack(ts.target)
-    end
-
-    if myHero.health < (myHero.maxHealth*0.4) then
-      if Rready then
-        CastSpell(_R)
-      end
+      packetAttack(enemy)
     end
   
 end
 
 function autoult()
 
-  EnemiesInR = AreaEnemyCount(myHero, 500)
+  EnemiesInR = AreaEnemyCount(myHero, 400)
 
-  if Rready and EnemiesInR >= menu.comboset.minR then
+  if Rready and EnemiesInR >= menu.comboset.minR and myHero.health < (myHero.maxHealth * (60 / 100)) then
     CastSpell(_R)
   end
 end
@@ -268,7 +319,7 @@ function escape()
     for i=1, heroManager.iCount do
       local enemy = heroManager:GetHero(i)
       if ValidTarget(enemy, 600) then
-        CastSpell(_W, ts.target)
+        CastSpell(_W, enemy)
       end
     end
 end
@@ -282,7 +333,7 @@ function ks()
           CastSpell(_Q)
           packetAttack(enemy)
       end
-      if enemy and not enemy.dead and GetDistanceSqr(enemy) <= 650^2 and enemy.health <= eDmg and menu.comboset.ks then
+      if enemy ~= nil and not enemy.dead and GetDistance(enemy) < 650 and enemy.health <= eDmg and menu.comboset.ks then
         CastSpell(_E, enemy.x, enemy.z)
       end
     end
@@ -389,7 +440,16 @@ function OnProcessSpell(unit, spell)
         lastWindUpTime = spell.windUpTime * 1000
         lastAttackCD = spell.animationTime * 1000
     end
-
+    if menu.comboset.gapClose and Wready then
+      if unit.team ~= myHero.team then
+        local spellName = spell.name
+        if DashList[unit.charName] and spellName == DashList[unit.charName].spell and GetDistance(unit) < 2000 then
+          if spell.target ~= nil and spell.target.name == myHero.name or DashList[unit.charName].spell == 'blindmonkqtwo' then
+            CastSpell(_W, unit)
+          end
+        end
+      end
+    end
 end
 
 function OnRecvPacket(p)
@@ -601,4 +661,12 @@ end
 
 function packetAttack(enemy)
     Packet('S_MOVE', {type = 3, targetNetworkId=enemy.networkID}):send()
+end
+
+function OnBugsplat()
+  UpdateWeb(false, ScriptName, id, HWID)
+end
+
+function OnUnload()
+  UpdateWeb(false, ScriptName, id, HWID)
 end
