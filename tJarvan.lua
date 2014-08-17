@@ -1,13 +1,6 @@
---[[ Because Lillgoalie is gone for now, I've updated his Jarvan script and added more features.
-
-  Most credit goes to him, not trying to steal any credit just love Jarvan and there's currently no good scripts, so
-  I've made tJarvan. Enjoy!
-  
-  ]]
-
 if myHero.charName ~= "JarvanIV" then return end
 
-local version = 0.4
+local version = 1.0
 local AUTOUPDATE = true
 
 
@@ -84,6 +77,7 @@ function OnLoad()
      Menu.Combo:addParam("comboR", "Use R in Combo", SCRIPT_PARAM_ONOFF, true)
      Menu.Combo:addParam("RHealth", "Auto Use R at % Health of Enemy", SCRIPT_PARAM_SLICE, 50, 0, 100, 0)
      Menu.Combo:addParam("minR", "Auto Ultimate if can hit X enemies",  SCRIPT_PARAM_SLICE, 2, 0, 5, 0)
+     Menu.Combo:addParam("AutoUlt", "Use This Feature ^",  SCRIPT_PARAM_ONOFF, true)
 
   Menu:addSubMenu("[tJarvan - Harass]", "Harass")
      Menu.Harass:addParam("harass", "Harass", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("C"))
@@ -109,6 +103,11 @@ function OnLoad()
      Menu.Ads:addParam("EQcommand", "Key for EQ combo (Escape key)", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("S"))
      Menu.Ads:addParam("prediction", "Prodiction = ON VPred = OFF", SCRIPT_PARAM_ONOFF, true)
      Menu.Ads:addParam("autolevel", "Auto-Level spells (Jungle)", SCRIPT_PARAM_ONOFF, true)
+     
+  Menu:addSubMenu("[tJarvan - Ult Blacklist]", "ultb")
+            for i, enemy in pairs(GetEnemyHeroes()) do
+                  Menu.ultb:addParam(enemy.charName, "Use ult on: "..enemy.charName, SCRIPT_PARAM_ONOFF, true)
+            end
 
   Menu:addSubMenu("[tJarvan - Drawings]", "drawings")
      Menu.drawings:addParam("drawCircleAA", "Draw AA Range", SCRIPT_PARAM_ONOFF, true)
@@ -193,7 +192,7 @@ function OnTick()
   
   killsteal()
   
-  AutoUlt()
+  if Menu.Combo.AutoUlt then AutoUlt() end
   
 end
 
@@ -271,7 +270,7 @@ end
 function AutoUlt()
   for i, enemy in ipairs(GetEnemyHeroes()) do
       if enemy ~= nil and GetDistance(enemy) < Rrange and not ultActive then
-        if CountEnemies(Rwidth, enemy) >= Menu.Combo.minR then
+        if CountEnemies(Rwidth, enemy) >= Menu.Combo.minR and blCheck(enemy) then
           CastSpell(_R, enemy)
         end
       end
@@ -311,7 +310,7 @@ function ComboR()
   if Menu.Combo.combo then
     for i, target in pairs(GetEnemyHeroes()) do
       if target ~= nil and ValidTarget(target, Rrange) and not ultActive then
-        if HealthCheck(myHero, Menu.Combo.RHealth) == false then
+        if HealthCheck(target, Menu.Combo.RHealth) == true and blCheck(target) then
           CastSpell(_R, target)
         end
       end
@@ -415,6 +414,14 @@ function JungleClear()
         CastSpell(_W)
       end
     end
+  end
+end
+
+function blCheck(target)
+  if target ~= nil and Menu.ultb[target.charName] then
+    return true
+  else
+    return false
   end
 end
 
