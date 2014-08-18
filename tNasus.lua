@@ -8,7 +8,7 @@
 if myHero.charName ~= "Nasus" or not VIP_USER then return end
 
 local version = 1.0
-local AUTOUPDATE = false
+local AUTOUPDATE = true
 
 require "SOW"
 require "VPrediction"
