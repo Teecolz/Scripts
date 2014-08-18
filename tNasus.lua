@@ -8,7 +8,7 @@
 if myHero.charName ~= "Nasus" or not VIP_USER then return end
 
 local version = 1.0
-local AUTOUPDATE = true
+local AUTOUPDATE = false
 
 require "SOW"
 require "VPrediction"
@@ -670,3 +670,17 @@ end
 function OnUnload()
   UpdateWeb(false, ScriptName, id, HWID)
 end
+
+function UnitAtTower(unit,offset)
+  for i, turret in pairs(GetTurrets()) do
+    if turret ~= nil then
+      if turret.team ~= myHero.team then
+        if GetDistance(unit, turret) <= turret.range+offset then
+          return true
+        end
+      end
+    end
+  end
+  return false
+end
+
