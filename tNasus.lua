@@ -5,9 +5,9 @@
   
   ]]
 
-if myHero.charName ~= "Nasus" or not VIP_USER then return end
+if myHero.charName ~= "Nasus" then return end
 
-local version = 1.0
+local version = 1.01
 local AUTOUPDATE = true
 
 require "SOW"
@@ -195,7 +195,7 @@ function OnLoad()
 
     menu:addParam("sep",         "",                                 SCRIPT_PARAM_INFO,        "")
     menu:addParam("sep",         "",                                 SCRIPT_PARAM_INFO,        "")
-    menu:addParam("disabled",    "Disable Stacking (Set to combo button)",       SCRIPT_PARAM_ONKEYDOWN, false, string.byte("T"))
+    menu:addParam("disabled",    "Disable Stacking (Set to combo button)               ", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("Y"))
     menu:addParam("sep",         "",                                 SCRIPT_PARAM_INFO,        "")
     menu:addParam("drawRange",   "Draw auto-attack range",           SCRIPT_PARAM_ONOFF,       true)
     menu:addParam("drawIndic",   "Draw damage indicator on enemies", SCRIPT_PARAM_ONOFF,       true)
