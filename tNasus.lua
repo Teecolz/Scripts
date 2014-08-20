@@ -8,7 +8,7 @@
 if myHero.charName ~= "Nasus" then return end
 
 local version = 1.02
-local AUTOUPDATE = false
+local AUTOUPDATE = true
 
 require "SOW"
 require "VPrediction"
