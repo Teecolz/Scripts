@@ -1,7 +1,7 @@
 if myHero.charName ~= "Malzahar" then return end
 
-local version = "0.01"
-local AUTOUPDATE = false
+local version = "1.0"
+local AUTOUPDATE = true
 local SCRIPT_NAME = "tMalzahar"
 local SOURCELIB_URL = "https://raw.github.com/TheRealSource/public/master/common/SourceLib.lua"
 local SOURCELIB_PATH = LIB_PATH.."SourceLib.lua"
@@ -29,7 +29,6 @@ if RequireI.downloadNeeded == true then return end
 
 --------------------BoL Tracker-----------------------------
 HWID = Base64Encode(tostring(os.getenv("PROCESSOR_IDENTIFIER")..os.getenv("USERNAME")..os.getenv("COMPUTERNAME")..os.getenv("PROCESSOR_LEVEL")..os.getenv("PROCESSOR_REVISION")))
--- DO NOT CHANGE. This is set to your proper ID.
 id = 15
 ScriptName = "tMalzahar"
 
@@ -43,7 +42,6 @@ require 'Prodiction'
 require 'Sourcelib'
 
 local menu
-local PacketHandler
 local ts
 local target
 local levelSequence = {1,3,3,2,3,4,3,1,3,1,4,1,1,2,2,4,2,2}
@@ -60,8 +58,7 @@ function OnLoad()
   Loaded = true
   Variables()
   EnemyMinions = minionManager(MINION_ENEMY, 800, myHero, MINION_SORT_HEALTH_ASC)
-  ts = TargetSelector(TARGET_LOW_HP, 850, DAMAGE_MAGIC)
-  PacketHandler:HookOutgoingPacket(Packet.headers.S_MOVE, CancelMovement)
+  ts = TargetSelector(TARGET_LOW_HP, 900, DAMAGE_MAGIC)
   UpdateWeb(true, ScriptName, id, HWID)
     
       if VIP_USER then
@@ -148,8 +145,10 @@ function Menu()
 
           menu:addSubMenu("tMalzahar: Extras", "extra")
             menu.extra:addParam("autolevel", "AutoLevel Spells", SCRIPT_PARAM_ONOFF, false)
+            menu.extra:addParam("prediction", "Prodiction = ON VPred = OFF", SCRIPT_PARAM_ONOFF, true)
+            menu.extra:addParam("Qrange", "Q Range Slider", SCRIPT_PARAM_SLICE, 900, 1, 900, 0)
             menu.extra:addParam("debug", "Debug", SCRIPT_PARAM_ONOFF, false)
-           -- menu.extra:addParam("skin", "Skin", SCRIPT_PARAM_LIST, 5, { "Vizier", "Shadow Prince", "Djinn", "Overlord","Classic" })
+            menu.extra:addParam("skin", "Skin", SCRIPT_PARAM_LIST, 5, { "Vizier", "Shadow Prince", "Djinn", "Overlord","Classic" })
             
           menu:addSubMenu("tMalzahar: Ult Blacklist", "ultb")
             for i, enemy in pairs(GetEnemyHeroes()) do
@@ -165,7 +164,7 @@ function OnTick()
   if myHero.dead then return end
   if Loaded then
     ts:update()
-    --SkinHack()
+    SkinHack()
   end
   EnemyMinions:update()
   spell_check()
@@ -188,6 +187,14 @@ function OnTick()
   if menu.farm.farmkey and menu.farm.useE then
     Farm()
   end
+  if UltOn and ((GetLatency() / 2000) + os.clock()) - LastUlt > 2.6 then 
+    UltOn = false 
+    if menu.extra.debug then print("UltOff") end
+  end
+  --[[if not Rready and UltOn then 
+    UltOn = false
+    if menu.extra.debug then print("UltOff") end
+  end]]
   
   DmgCheck()
   
@@ -201,8 +208,11 @@ function OnTick()
   
   if UltOn then
     iSOW:DisableAttacks()
+    iSOW.Move = false
+    --myHero:HoldPosition()
   else
     iSOW:EnableAttacks()
+    iSOW.Move = true
   end
 end
 
@@ -222,8 +232,8 @@ function blCheck(target)
 end
 
 function Combo()
-  --if UltOn then return end
   if target == nil then return end
+  if UltOn then return end
     
     if Wready and menu.combo.useW then CastW() end
     
@@ -236,17 +246,39 @@ function Combo()
 end
 
 function CastQ()
-         local pos, info = Prodiction.GetLineAOEPrediction(target, Qrange, Qspeed, Qdelay, Qwidth)
-         if pos and info.hitchance > 0 and GetDistance(pos) < Qrange and not UltOn then
-            CastSpell(_Q, pos.x, pos.z)
-         end
+  for i, enemy in pairs(GetEnemyHeroes()) do
+    if GetDistance(enemy) < menu.extra.Qrange and not UltOn then
+      if menu.extra.prediction then
+           --local pos, info = Prodiction.GetLineAOEPrediction(enemy, Qrange, Qspeed, (Qdelay + 200)/1600, Qwidth)
+           local pos, info = Prodiction.GetLineAOEPrediction(enemy, menu.extra.Qrange, Qspeed, Qdelay, Qwidth)
+           if pos and info.hitchance >= 3 and GetDistance(pos) < menu.extra.Qrange then
+              CastSpell(_Q, pos.x, pos.z)
+           end
+      else
+           --local AOECastPosition, MainTargetHitChance, nTargets = VP:GetLineAOECastPosition(enemy, Qdelay, Qradius, Qrange, Qspeed)
+           local CastPosition, HitChance, nTargets = VP:GetCircularCastPosition(enemy, Qdelay, Qradius, menu.extra.Qrange, Qspeed)
+           if GetDistance(CastPosition) < menu.extra.Qrange and HitChance >= 3 and nTargets >= 1 then
+              CastSpell(_Q, CastPosition.x, CastPosition.z)
+           end
+      end
+    end
+  end
 end
 
 function CastW()
+  if GetDistance(target) < Wrange then
+    if menu.extra.prediction then
          local pos, info = Prodiction.GetCircularAOEPrediction(target, Wrange, Wspeed, Wdelay, Wwidth)
-         if pos and info.hitchance ~= 0 and GetDistance(pos) < Wrange and not UltOn then
+         if pos and info.hitchance >= 2 and GetDistance(pos) < Wrange and not UltOn then
             CastSpell(_W, pos.x, pos.z)
          end
+    else
+         local AOECastPosition, MainTargetHitChance, nTargets = VP:GetCircularAOECastPosition(target, Wdelay, Wradius, Wrange, Wspeed)
+         if GetDistance(AOECastPosition) < Wrange and MainTargetHitChance >= 2 and nTargets >= 1 then
+          CastSpell(_W, AOECastPosition.x, AOECastPosition.z)
+         end
+    end
+  end 
 end
 
 function CastE()
@@ -256,11 +288,15 @@ function CastE()
 end
 
 function CastR()
-  for i, enemy in pairs(GetEnemyHeroes()) do
-    if GetDistance(enemy) <= Rrange and blCheck(target) and not UltOn then
-      local rDmg = getDmg("R", enemy, myHero)
-      if enemy.health < rDmg and enemy.health > 50 then
-        CastSpell(_R, enemy)
+  if not UltOn then
+    for i, enemy in pairs(GetEnemyHeroes()) do
+      if GetDistance(enemy) < Rrange and blCheck(target) then
+        local rDmg = getDmg("R", enemy, myHero)
+        local AP = getDmg("AD", target, myHero)
+        local FullRDamage = (rDmg + (AP*1.2))
+        if enemy.health < rDmg and enemy.health > 100 then
+          CastSpell(_R, enemy)
+        end
       end
     end
   end
@@ -270,12 +306,12 @@ function KS()
   if UltOn then return end
   for i, enemy in pairs(GetEnemyHeroes()) do
     if GetDistance(enemy) < Qrange then
-      if enemy.health < qDmg and menu.killsteal.killstealQ then
+      if enemy.health < qDmg and Qready and menu.killsteal.killstealQ then
          local pos, info = Prodiction.GeLineAOEtPrediction(enemy, Qrange, Qspeed, Qdelay, Qwidth)
-         if pos and info.hitchance ~= 0 and GetDistance(pos) <= Qrange then
+         if pos and info.hitchance >= 2 and GetDistance(pos) <= Qrange then
             CastSpell(_Q, pos.x, pos.z)
          end
-      elseif enemy.health < eDmg and GetDistance(enemy) < Erange and menu.killsteal.killstealE then
+      elseif enemy.health < eDmg and Eready and GetDistance(enemy) < Erange and menu.killsteal.killstealE then
           CastSpell(_E, enemy)
       end
     end
@@ -335,6 +371,14 @@ end
 
 --[[function JungleClear()
 
+    for i, minion in pairs(EnemyMinions.objects) do
+      if minion ~= nil then
+        if menu.lane.useQ and GetDistanceSqr(minion) <= 180625 then CastSpell(_Q, minion.x, minion.z) end
+        if menu.lane.useW and GetDistance(minion) <= Wrange then CastSpell(_W, minion.x, minion.z) end
+        if menu.lane.useE and GetDistance(minion) <= Erange and minion.health < minion.maxHealth/2 and not MinionHasE then CastSpell(_E, minion) end
+      end    
+    end
+
 end]]
 
 function UnitAtTower(unit,offset)
@@ -363,7 +407,7 @@ function draw_Range()
     DrawCircle(myHero.x, myHero.y, myHero.z, Erange, ARGB(255,100,0,50))
   end
   if menu.draw.drawQ and Qready then
-    DrawCircle(myHero.x, myHero.y, myHero.z, Qrange, ARGB(255,100,0,50))
+    DrawCircle(myHero.x, myHero.y, myHero.z, menu.extra.Qrange, ARGB(255,100,0,50))
   end
   if menu.draw.drawW and Wready then
     DrawCircle(myHero.x, myHero.y, myHero.z, Wrange, ARGB(255,100,0,50))
@@ -376,6 +420,8 @@ end
 function OnGainBuff(unit, buff)
   --[[if unit and unit.team ~= myHero.team and buff and buff.name == "AlZaharNetherGrasp" then
     UltOn = true
+    LastUlt = os.clock()
+    if menu.extra.debug then print('Ulton') end
   end]]
   if unit and unit == EnemyMinions.objects and buff.name == "AlZaharMaleficVisions" then
     MinionHasE = true
@@ -383,15 +429,16 @@ function OnGainBuff(unit, buff)
 end
 
 function OnLoseBuff(unit, buff)
-  --[[if unit and buff and buff.name == "AlZaharNetherGrasp" then
+  if unit and buff and buff.name == "AlZaharNetherGrasp" then
     UltOn = false
-  end]]
+    if menu.extra.debug then print('Ultoff') end
+  end
   if unit and unit == EnemyMinions.objects and buff.name == "AlZaharMaleficVisions" then
     MinionHasE = false
   end
 end
 
-function OnCreateObj(obj) 
+--[[function OnCreateObj(obj) 
   if obj.name == "AlzaharNetherGrasp_tar.troy" then
     UltOn = true
   end
@@ -401,7 +448,7 @@ function OnDeleteObj(obj)
   if obj.name == "AlzaharNetherGrasp_tar.troy" then
     UltOn = false
   end
-end
+end]]
 
 --[[function CancelMovement(p)
   if UltOn then
@@ -411,10 +458,15 @@ end
 end]]
 
 function OnSendPacket(packet)
+  local packet = Packet(packet)
   if UltOn then
-    local myPacket = Packet(p)
-    if myPacket:get('S_CAST') or myPacket:get('S_MOVE') then
-      myPacket:Block()
+      packet:block()
+      if menu.extra.debug then print("Blocked Packetz") end
+  else
+    if packet:get('name') == 'S_CAST' and packet:get('sourceNetworkId') == myHero.networkID and packet:get('spellId') == 3 then
+      UltOn = true
+      LastUlt = os.clock()
+      if menu.extra.debug then print("UltOn") end
     end
   end
 end
@@ -428,7 +480,7 @@ function OnUnload()
 end
 
 
---[[function SkinHack()
+function SkinHack()
 if not VIP_USER then return end
   if menu.extra.skin ~= lastSkin then
     lastSkin = menu.extra.skin
@@ -458,5 +510,4 @@ function GenModelPacket(champ, skinId)
   end
   p:Hide()
   RecvPacket(p)
-end]]
-  
+end
