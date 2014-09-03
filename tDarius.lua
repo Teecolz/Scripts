@@ -2,7 +2,7 @@ if myHero.charName ~= "Darius" then return end
 
 --[AUTOUPDATER]--
 
-local version = "1.42"
+local version = "1.5"
 local AUTOUPDATE = true
 local SCRIPT_NAME = "tDarius"
 local SOURCELIB_URL = "https://raw.github.com/TheRealSource/public/master/common/SourceLib.lua"
@@ -121,12 +121,14 @@ function Menu()
             menu.combo:addParam("useQ", "Use Q-Spell",  SCRIPT_PARAM_ONOFF, true)
             menu.combo:addSubMenu("Q Options", "qoptions")
             menu.combo.qoptions:addParam("qmax", "Only use Q at max damage", SCRIPT_PARAM_ONOFF, false)
+            menu.combo.qoptions:addParam("packetsQ", "Use Packets for Q", SCRIPT_PARAM_ONOFF, true)
             menu.combo:addParam("useW", "Use W-Spell",  SCRIPT_PARAM_ONOFF, true)
             menu.combo:addParam("useE", "Use E-Spell",  SCRIPT_PARAM_ONOFF, true)
             menu.combo:addParam("minE", "Min E Range", SCRIPT_PARAM_SLICE, 0, 0, 300)
             menu.combo:addParam("useR", "Use R-Spell",  SCRIPT_PARAM_ONOFF, true)
             menu.combo:addParam("useITEM", "Use Items",  SCRIPT_PARAM_ONOFF, true)
             menu.combo:addParam("rBuffer", "R% to ult at",SCRIPT_PARAM_SLICE, 100, 0, 100, 2)
+            menu.combo:addParam("packets", "Use Packets for Ult", SCRIPT_PARAM_ONOFF, true)
 
           menu:addSubMenu("tDarius: Harass", "harass")
             menu.harass:addParam("harasskey", "Harass", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("C"))
@@ -215,7 +217,11 @@ function OnTick()
   if menu.harass.autoQ then
     if menu.harass.mana < (myHero.mana / myHero.maxMana) * 100 then
      if target and not UnitAtTower(target, 0) and Qready and GetDistance(target) < 405 and GetDistance(target) > 270 then
-        CastSpell(_Q)
+          if menu.combo.qoptions.packetsQ then
+            Packet("S_CAST", {spellId = _Q}):send()
+          else
+            CastSpell(_Q)
+          end
       end  
     end
   end
@@ -253,10 +259,18 @@ function Combo()
     if menu.combo.useITEM and TMTREADY and GetDistance(target) < 275 then CastSpell(TMTSlot) end
     if menu.combo.useITEM and RAHREADY and GetDistance(target) < 275 then CastSpell(RAHSlot) end
     if target and menu.combo.useQ and menu.combo.qoptions.qmax and Qready and GetDistance(target) < 425 and GetDistance(target) > 270 then
-        CastSpell(_Q)
-       elseif target and menu.combo.useQ and GetDistanceSqr(target) <= 180625 and Qready then
-          CastSpell(_Q)
-       end
+          if menu.combo.qoptions.packetsQ then
+            Packet("S_CAST", {spellId = _Q,}):send()
+          else
+            CastSpell(_Q)
+          end
+    elseif target and menu.combo.useQ and GetDistanceSqr(target) <= 180625 and Qready then
+          if menu.combo.qoptions.packetsQ then
+            Packet("S_CAST", {spellId = _Q}):send()
+          else
+            CastSpell(_Q)
+          end
+    end
     if menu.combo.useE and target and GetDistance(target) > menu.combo.minE and GetDistanceSqr(target) <= 291600 and Eready then 
       local AOECastPosition, MainTargetHitChance, nTargets = VP:GetLineAOECastPosition(target, 0.5, 225, Erange, 1500, myHero, false)
       if nTargets >= 1 and GetDistance(AOECastPosition) <= Erange and GetDistance(AOECastPosition) >= 250 then
@@ -270,8 +284,13 @@ function Combo()
               local multiplier = GetMultiplier(enemy.stack)
               local rDmg = multiplier * getDmg("R", target, myHero)
               if target.health <= rDmg*(menu.combo.rBuffer/100) then
-                if menu.extra.debug then print("Combo ult casted") end
-                CastSpell(_R, target)
+                  if menu.combo.packets then
+                    Packet("S_CAST", {spellId = _R, targetNetworkId = target.networkID}):send()
+                    if menu.extra.debug then print("Casted with packet") end
+                  else
+                    if menu.extra.debug then print("Combo ult casted") end
+                    CastSpell(_R, target)
+                  end
               end
            end
           end
@@ -305,7 +324,11 @@ function Harass()
 
   if menu.harass.harasskey and target then
     if menu.harass.useQ and GetDistanceSqr(target) <= 180625 then
-      CastSpell(_Q)
+          if menu.combo.qoptions.packetsQ then
+            Packet("S_CAST", {spellId = _Q, targetNetworkId = target.networkID}):send()
+          else
+            CastSpell(_Q)
+          end
     end
   end
 end
@@ -451,8 +474,13 @@ if menu.killsteal.killstealR then -- why even bother checking the rest and calcu
        local multiplier = GetMultiplier(enemy.stack)
        local rDmg = multiplier * getDmg("R", enemy.object, myHero)
        if enemy.object.health <= rDmg*(menu.combo.rBuffer/100) then
-         if menu.extra.debug then print("Combo ult casted") end
-         CastSpell(_R, enemy.object)
+          if menu.combo.packets then
+              Packet("S_CAST", {spellId = _R, targetNetworkId = enemy.networkID}):send()
+              if menu.extra.debug then print("Casted with packet") end
+          else
+             if menu.extra.debug then print("Combo ult casted") end
+             CastSpell(_R, enemy.object)
+          end
        end
        end
       end
@@ -530,7 +558,11 @@ function killstealQ()
   for i, enemy in pairs(Enemies) do
       if ValidTarget(enemy, Qrange) and not enemy.dead and GetDistance(enemy) < Qrange then
         if (getDmg("Q", enemy,myHero)+getDmg("AD", enemy,myHero)) > enemy.health then
+          if menu.combo.qoptions.packetsQ then
+            Packet("S_CAST", {spellId = _Q}):send()
+          else
             CastSpell(_Q)
+          end
         end
       end
   end
