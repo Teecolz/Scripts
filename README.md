@@ -1,5 +1,5 @@
 Scripts
 =======
 
-scripts that i attempt to make
+Can't handle how corrupt the BoL staff has gotten...I'm done...bye guys.
 
