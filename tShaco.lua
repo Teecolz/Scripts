@@ -1,23 +1,23 @@
 if myHero.charName ~= "Shaco" then return end
 
 local version = 1.0
-local AUTOUPDATE = false
+local AUTOUPDATE = true
 
 
 local SCRIPT_NAME = "tShaco"
 local SOURCELIB_URL = "https://raw.github.com/TheRealSource/public/master/common/SourceLib.lua"
 local SOURCELIB_PATH = LIB_PATH.."SourceLib.lua"
 if FileExist(SOURCELIB_PATH) then
-  require("SourceLib")
+		require("SourceLib")
 else
-  DOWNLOADING_SOURCELIB = true
-  DownloadFile(SOURCELIB_URL, SOURCELIB_PATH, function() print("Required libraries downloaded successfully, please reload") end)
+		DOWNLOADING_SOURCELIB = true
+		DownloadFile(SOURCELIB_URL, SOURCELIB_PATH, function() print("Required libraries downloaded successfully, please reload") end)
 end
 
 if DOWNLOADING_SOURCELIB then print("Downloading required libraries, please wait...") return end
 
 if AUTOUPDATE then
-  SourceUpdater(SCRIPT_NAME, version, "raw.github.com", "/teecolz/Scripts/master/"..SCRIPT_NAME..".lua", SCRIPT_PATH .. GetCurrentEnv().FILE_NAME, "/teecolz/Scripts/master/"..SCRIPT_NAME..".version"):CheckUpdate()
+		SourceUpdater(SCRIPT_NAME, version, "raw.github.com", "/teecolz/Scripts/master/"..SCRIPT_NAME..".lua", SCRIPT_PATH .. GetCurrentEnv().FILE_NAME, "/teecolz/Scripts/master/"..SCRIPT_NAME..".version"):CheckUpdate()
 end
 
 local RequireI = Require("SourceLib")
@@ -84,64 +84,64 @@ boxSpots = {
 }
 
 function OnLoad()
-
-  	VP    = VPrediction()
-  	iSOW  = SOW(VP)
-  	ts = TargetSelector(TARGET_LOW_HP,625,DAMAGE_MAGIC and DAMAGE_PHYSICAL,false)
-  	EnemyMinions = minionManager(MINION_ENEMY, 425, myHero, MINION_SORT_HEALTH_ASC)
-  	JungVariables()
-
-
+		
+		VP = VPrediction()
+		iSOW = SOW(VP)
+		ts = TargetSelector(TARGET_LOW_HP,625,DAMAGE_MAGIC and DAMAGE_PHYSICAL,false)
+		EnemyMinions = minionManager(MINION_ENEMY, 425, myHero, MINION_SORT_HEALTH_ASC)
+		JungVariables()
+		
+		
 		menu = scriptConfig("tShaco", "tShaco")
-
+		
 		menu:addSubMenu("tShaco: Orbwalk", "Orbwalk")
-            iSOW:LoadToMenu(menu.Orbwalk)  
-
+		iSOW:LoadToMenu(menu.Orbwalk) 
+		
 		menu:addParam("Combo", "Combo", SCRIPT_PARAM_ONKEYDOWN, false, 32)
 		menu:addParam("Harass", "Harass", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("T"))
 		menu:addParam("Escape", "Stealth Recall", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("S"))
-
+		
 		menu:addSubMenu("tShaco: Options", "Options")
-			menu.Options:addParam("Ulti", "Use Clone in Combo", SCRIPT_PARAM_ONOFF, false)
-			menu.Options:addParam("Qcombo", "Use Q in Combo", SCRIPT_PARAM_ONOFF, true)
-			menu.Options:addParam("KS", "Killsteal with E", SCRIPT_PARAM_ONOFF, true)
-			--menu.Options:addParam("DrawCircles", "Draw Spell Ranges", SCRIPT_PARAM_ONOFF, true)
-			menu.Options:addParam("AutoBox", "Auto Place Boxes at Buffs", SCRIPT_PARAM_ONOFF, true)
-			menu.Options:addParam("autolevel", "Autolevel Spells", SCRIPT_PARAM_ONOFF, true)
-
+		menu.Options:addParam("Ulti", "Use Clone in Combo", SCRIPT_PARAM_ONOFF, false)
+		menu.Options:addParam("Qcombo", "Use Q in Combo", SCRIPT_PARAM_ONOFF, true)
+		menu.Options:addParam("KS", "Killsteal with E", SCRIPT_PARAM_ONOFF, true)
+		--menu.Options:addParam("DrawCircles", "Draw Spell Ranges", SCRIPT_PARAM_ONOFF, true)
+		menu.Options:addParam("AutoBox", "Auto Place Boxes at Buffs", SCRIPT_PARAM_ONOFF, true)
+		menu.Options:addParam("autolevel", "Autolevel Spells", SCRIPT_PARAM_ONOFF, true)
+		
 		menu:addSubMenu("tShaco: Lane Clear", "lane")
-            menu.lane:addParam("lanekey", "Lane Clear", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("N"))
-            menu.lane:addParam("useE", "Use E-Spell", SCRIPT_PARAM_ONOFF, true)
-            menu.lane:addParam("useW", "Use W-Spell", SCRIPT_PARAM_ONOFF, true)
-            menu.lane:addParam("useITEM", "Use Items",  SCRIPT_PARAM_ONOFF, true)
-            
-        menu:addSubMenu("tShaco: Jungle Clear", "jungle")
-            menu.jungle:addParam("junglekey", "Jungle Clear", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("N"))
-            menu.jungle:addParam("useE", "Use E-Spell", SCRIPT_PARAM_ONOFF, true)
-            menu.jungle:addParam("useW", "Use W-Spell", SCRIPT_PARAM_ONOFF, true)
-            menu.jungle:addParam("useITEM", "Use Items",  SCRIPT_PARAM_ONOFF, true)
-
+		menu.lane:addParam("lanekey", "Lane Clear", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("N"))
+		menu.lane:addParam("useE", "Use E-Spell", SCRIPT_PARAM_ONOFF, true)
+		menu.lane:addParam("useW", "Use W-Spell", SCRIPT_PARAM_ONOFF, true)
+		menu.lane:addParam("useITEM", "Use Items", SCRIPT_PARAM_ONOFF, true)
+		
+		menu:addSubMenu("tShaco: Jungle Clear", "jungle")
+		menu.jungle:addParam("junglekey", "Jungle Clear", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("N"))
+		menu.jungle:addParam("useE", "Use E-Spell", SCRIPT_PARAM_ONOFF, true)
+		menu.jungle:addParam("useW", "Use W-Spell", SCRIPT_PARAM_ONOFF, true)
+		menu.jungle:addParam("useITEM", "Use Items", SCRIPT_PARAM_ONOFF, true)
+		
 		menu:addSubMenu("tShaco: Drawings", "draw")
-            menu.draw:addParam("drawAA", "Draw AA Range", SCRIPT_PARAM_ONOFF, true)
-            menu.draw:addParam("drawQ", "Draw Q Range",   SCRIPT_PARAM_ONOFF, true)
-            menu.draw:addParam("drawW", "Draw W Range",   SCRIPT_PARAM_ONOFF, true)
-            menu.draw:addParam("drawE", "Draw E Range",   SCRIPT_PARAM_ONOFF, true)
-
+		menu.draw:addParam("drawAA", "Draw AA Range", SCRIPT_PARAM_ONOFF, true)
+		menu.draw:addParam("drawQ", "Draw Q Range", SCRIPT_PARAM_ONOFF, true)
+		menu.draw:addParam("drawW", "Draw W Range", SCRIPT_PARAM_ONOFF, true)
+		menu.draw:addParam("drawE", "Draw E Range", SCRIPT_PARAM_ONOFF, true)
+		
 		menu:permaShow("Combo")
 		menu:permaShow("Harass")
 		menu.Options:permaShow("AutoBox")
-
-        menu:addSubMenu("tShaco: Target Selector", "targetSelector")
-          menu.targetSelector:addTS(ts)
-
+		
+		menu:addSubMenu("tShaco: Target Selector", "targetSelector")
+		menu.targetSelector:addTS(ts)
+		
 		print("<font color=\"#78CCDB\"><b>" ..">> tShaco successfully loaded ;)")
 		
 		UpdateWeb(true, ScriptName, id, HWID)
-
+		
 end
 
 function OnTick()
-	if myHero.dead then return end
+		if myHero.dead then return end
 		ts:update() 
 		Spellcheck()
 		EnemyMinions:update()
@@ -151,32 +151,32 @@ function OnTick()
 				lastCZ = clone.z
 		end
 		if menu.Combo then
-			Combo()
-			if menu.Options.Ulti and ValidTarget(ts.target) and Rready then
-				CastR()
-			end
+				Combo()
+				if menu.Options.Ulti and ValidTarget(ts.target) and Rready then
+						CastR()
+				end
 		end
 		if menu.Escape then
 				CastSpell(_Q, mousePos.x, mousePos.z)
 				CastSpell(RECALL)
 		end 
 		if menu.Harass then
-			Harass()
+				Harass()
 		end
 		if menu.lane.lanekey then
-    		LaneClear()
-  		end
-  		if menu.jungle.junglekey then
-    		JungleClear()
-  		end
+				LaneClear()
+		end
+		if menu.jungle.junglekey then
+				JungleClear()
+		end
 		if menu.Options.AutoBox then
-			AutoBox()
+				AutoBox()
 		end
 		if menu.Options.autolevel then autoLevelSetSequence(levelSequence) end
 end
 
 --[[function getHitBoxRadius(target)
-		return GetDistance(target.minBBox, target.maxBBox)/2
+return GetDistance(target.minBBox, target.maxBBox)/2
 end]]
 
 function UseItems(target)
@@ -196,58 +196,58 @@ function UseItems(target)
 end
 
 function KS()
-  for i, enemy in pairs(GetEnemyHeroes()) do
-      if ValidTarget(enemy, 625) and not enemy.dead and GetDistance(enemy) < 625 then
-			eDmg = getDmg("E", enemy, myHero)
-			if enemy.health < eDmg*1.2 then
-					CastSpell(_E, enemy)
-			end
-	  end
-  end
+		for i, enemy in pairs(GetEnemyHeroes()) do
+				if ValidTarget(enemy, 625) and not enemy.dead and GetDistance(enemy) < 625 then
+						eDmg = getDmg("E", enemy, myHero)
+						if enemy.health < eDmg*1.2 then
+								CastSpell(_E, enemy)
+						end
+				end
+		end
 end
 
 
 function Spellcheck()
-
-  Qready = (myHero:CanUseSpell(_Q) == READY)
-  Wready = (myHero:CanUseSpell(_W) == READY)
-  Eready = (myHero:CanUseSpell(_E) == READY)
-  Rready = (myHero:CanUseSpell(_R) == READY)
-
-  TMTSlot, RAHSlot = GetInventorySlotItem(3077), GetInventorySlotItem(3074)
-  
-  TMTREADY = (TMTSlot ~= nil and myHero:CanUseSpell(TMTSlot) == READY)
-  RAHREADY = (RAHSlot ~= nil and myHero:CanUseSpell(RAHSlot) == READY)
-
- end
+		
+		Qready = (myHero:CanUseSpell(_Q) == READY)
+		Wready = (myHero:CanUseSpell(_W) == READY)
+		Eready = (myHero:CanUseSpell(_E) == READY)
+		Rready = (myHero:CanUseSpell(_R) == READY)
+		
+		TMTSlot, RAHSlot = GetInventorySlotItem(3077), GetInventorySlotItem(3074)
+		
+		TMTREADY = (TMTSlot ~= nil and myHero:CanUseSpell(TMTSlot) == READY)
+		RAHREADY = (RAHSlot ~= nil and myHero:CanUseSpell(RAHSlot) == READY)
+		
+end
 
 function CastR()
-	if clone == nil then CastSpell(_R)
-			if clone ~= nil and GetDistance(clone, ts.target) > 350 then
-					CastSpell(_R, ts.target) 
-			end
-	end
+		if clone == nil then CastSpell(_R)
+				if clone ~= nil and GetDistance(clone, ts.target) > 350 then
+						CastSpell(_R, ts.target) 
+				end
+		end
 end
 
 function Combo()
-
-	target = ts.target
-
-	if ValidTarget(target) and Qready and menu.Options.Qcombo then
-			CastSpell(_Q, ts.nextPosition.x, ts.nextPosition.z)
-	end
-	if ValidTarget(target, 625) then
-			myHero:Attack(target)
-	end
-	if ValidTarget(target, 625) then
-			UseItems(target)
-	end
-	if ValidTarget(target, 425) and Wready then
-			CastSpell(_W, target.x, target.z)
-	end
-	if ValidTarget(target, 625) then
-			CastSpell(_E, target)
-	end 
+		
+		target = ts.target
+		
+		if ValidTarget(target) and Qready and menu.Options.Qcombo then
+				CastSpell(_Q, ts.nextPosition.x, ts.nextPosition.z)
+		end
+		if ValidTarget(target, 625) then
+				myHero:Attack(target)
+		end
+		if ValidTarget(target, 625) then
+				UseItems(target)
+		end
+		if ValidTarget(target, 425) and Wready then
+				CastSpell(_W, target.x, target.z)
+		end
+		if ValidTarget(target, 625) then
+				CastSpell(_E, target)
+		end 
 end
 
 function Harass()
@@ -268,111 +268,111 @@ function OnCreateObj(object)
 				lastClone = GetTickCount()
 				lastCPosUpdate = GetTickCount()
 		end
-	  if object.valid then
-	    if FocusJungleNames[object.name] then
-	      JungleFocusMobs[#JungleFocusMobs+1] = object
-	    elseif JungleMobNames[object.name] then
-	      JungleMobs[#JungleMobs+1] = object
-	    end
-	  end
+		if object.valid then
+				if FocusJungleNames[object.name] then
+						JungleFocusMobs[#JungleFocusMobs+1] = object
+				elseif JungleMobNames[object.name] then
+						JungleMobs[#JungleMobs+1] = object
+				end
+		end
 end
 
 function OnDeleteObj(object)
 		if object ~= nil and object.name:find("Jester_Copy") then
 				clone = nil
 		end
-  for i, Mob in pairs(JungleMobs) do
-    if object.name == Mob.name then
-      table.remove(JungleMobs, i)
-    end
-  end
-  for i, Mob in pairs(JungleFocusMobs) do
-    if object.name == Mob.name then
-      table.remove(JungleFocusMobs, i)
-    end
-  end
+		for i, Mob in pairs(JungleMobs) do
+				if object.name == Mob.name then
+						table.remove(JungleMobs, i)
+				end
+		end
+		for i, Mob in pairs(JungleFocusMobs) do
+				if object.name == Mob.name then
+						table.remove(JungleFocusMobs, i)
+				end
+		end
 end
 
 function GetJungleMob()
-  for _, Mob in pairs(JungleFocusMobs) do
-    if ValidTarget(Mob, 425) then return Mob end
-  end
-  for _, Mob in pairs(JungleMobs) do
-    if ValidTarget(Mob, 425) then return Mob end
-  end
+		for _, Mob in pairs(JungleFocusMobs) do
+				if ValidTarget(Mob, 425) then return Mob end
+		end
+		for _, Mob in pairs(JungleMobs) do
+				if ValidTarget(Mob, 425) then return Mob end
+		end
 end
 
 function JungVariables()
-  JungleMobs = {}
-  JungleFocusMobs = {}
-  JungleMobNames = { 
-    ["Wolf8.1.2"]     = true,
-    ["Wolf8.1.3"]     = true,
-    ["YoungLizard7.1.2"]  = true,
-    ["YoungLizard7.1.3"]  = true,
-    ["LesserWraith9.1.3"] = true,
-    ["LesserWraith9.1.2"] = true,
-    ["LesserWraith9.1.4"] = true,
-    ["YoungLizard10.1.2"] = true,
-    ["YoungLizard10.1.3"] = true,
-    ["SmallGolem11.1.1"]  = true,
-    ["Wolf2.1.2"]     = true,
-    ["Wolf2.1.3"]     = true,
-    ["YoungLizard1.1.2"]  = true,
-    ["YoungLizard1.1.3"]  = true,
-    ["LesserWraith3.1.3"] = true,
-    ["LesserWraith3.1.2"] = true,
-    ["LesserWraith3.1.4"] = true,
-    ["YoungLizard4.1.2"]  = true,
-    ["YoungLizard4.1.3"]  = true,
-    ["SmallGolem5.1.1"]   = true
-  }
-  
-  FocusJungleNames = {
-    ["Dragon6.1.1"]     = true,
-    ["Worm12.1.1"]      = true,
-    ["GiantWolf8.1.1"]    = true,
-    ["AncientGolem7.1.1"] = true,
-    ["Wraith9.1.1"]     = true,
-    ["LizardElder10.1.1"] = true,
-    ["Golem11.1.2"]     = true,
-    ["GiantWolf2.1.1"]    = true,
-    ["AncientGolem1.1.1"] = true,
-    ["Wraith3.1.1"]     = true,
-    ["LizardElder4.1.1"]  = true,
-    ["Golem5.1.2"]      = true,
-    ["GreatWraith13.1.1"] = true,
-    ["GreatWraith14.1.1"] = true
-  }
-    
-  for i = 0, objManager.maxObjects do
-    local object = objManager:getObject(i)
-    if object and object.valid and not object.dead then
-      if FocusJungleNames[object.name] then
-        JungleFocusMobs[#JungleFocusMobs+1] = object
-      elseif JungleMobNames[object.name] then
-        JungleMobs[#JungleMobs+1] = object
-      end
-    end
-  end
+		JungleMobs = {}
+		JungleFocusMobs = {}
+		JungleMobNames = { 
+				["Wolf8.1.2"] = true,
+				["Wolf8.1.3"] = true,
+				["YoungLizard7.1.2"] = true,
+				["YoungLizard7.1.3"] = true,
+				["LesserWraith9.1.3"] = true,
+				["LesserWraith9.1.2"] = true,
+				["LesserWraith9.1.4"] = true,
+				["YoungLizard10.1.2"] = true,
+				["YoungLizard10.1.3"] = true,
+				["SmallGolem11.1.1"] = true,
+				["Wolf2.1.2"] = true,
+				["Wolf2.1.3"] = true,
+				["YoungLizard1.1.2"] = true,
+				["YoungLizard1.1.3"] = true,
+				["LesserWraith3.1.3"] = true,
+				["LesserWraith3.1.2"] = true,
+				["LesserWraith3.1.4"] = true,
+				["YoungLizard4.1.2"] = true,
+				["YoungLizard4.1.3"] = true,
+				["SmallGolem5.1.1"] = true
+		}
+		
+		FocusJungleNames = {
+				["Dragon6.1.1"] = true,
+				["Worm12.1.1"] = true,
+				["GiantWolf8.1.1"] = true,
+				["AncientGolem7.1.1"] = true,
+				["Wraith9.1.1"] = true,
+				["LizardElder10.1.1"] = true,
+				["Golem11.1.2"] = true,
+				["GiantWolf2.1.1"] = true,
+				["AncientGolem1.1.1"] = true,
+				["Wraith3.1.1"] = true,
+				["LizardElder4.1.1"] = true,
+				["Golem5.1.2"] = true,
+				["GreatWraith13.1.1"] = true,
+				["GreatWraith14.1.1"] = true
+		}
+		
+		for i = 0, objManager.maxObjects do
+				local object = objManager:getObject(i)
+				if object and object.valid and not object.dead then
+						if FocusJungleNames[object.name] then
+								JungleFocusMobs[#JungleFocusMobs+1] = object
+						elseif JungleMobNames[object.name] then
+								JungleMobs[#JungleMobs+1] = object
+						end
+				end
+		end
 end
 
 function OnDraw()
 		if not myHero.dead then
-			  if menu.draw.drawAA then
-			    DrawCircle(myHero.x, myHero.y, myHero.z, 125, ARGB(255,0,0,80))
-			  end
-			  if menu.draw.drawQ and Qready then
-			    DrawCircle(myHero.x, myHero.y, myHero.z, 400, ARGB(255,0,0,80))
-			  end
-			  if menu.draw.drawW and Wready then
-			    DrawCircle(myHero.x, myHero.y, myHero.z, 425, ARGB(255,0,0,80))
-			  end
-			  if menu.draw.drawE and Eready then
-			    DrawCircle(myHero.x, myHero.y, myHero.z, 625, ARGB(255,0,0,80))
-			  end
+				if menu.draw.drawAA then
+						DrawCircle(myHero.x, myHero.y, myHero.z, 125, ARGB(255,0,0,80))
+				end
+				if menu.draw.drawQ and Qready then
+						DrawCircle(myHero.x, myHero.y, myHero.z, 400, ARGB(255,0,0,80))
+				end
+				if menu.draw.drawW and Wready then
+						DrawCircle(myHero.x, myHero.y, myHero.z, 425, ARGB(255,0,0,80))
+				end
+				if menu.draw.drawE and Eready then
+						DrawCircle(myHero.x, myHero.y, myHero.z, 625, ARGB(255,0,0,80))
+				end
 				if ValidTarget(ts.target) then
-					target = ts.target
+						target = ts.target
 						DrawCircle(target.x, target.y, target.z, 100, 0x00FF000)
 				end
 				if clone ~= nil then
@@ -407,39 +407,39 @@ function OnDraw()
 end
 
 function AutoBox()
-	for i, boxSpot in pairs(boxSpots) do
-		if GetDistance(boxSpot, myHero) < 800 and Wready then
-			--[[local minutes = 1
-			local seconds = 0
-			seconds = seconds + (minutes * 60)]]
-			if GetGameTimer() >= 100 and GetGameTimer() <= 160 then
-				CastSpell(_W, boxSpot.x, boxSpot.z)
-			end
+		for i, boxSpot in pairs(boxSpots) do
+				if GetDistance(boxSpot, myHero) < 800 and Wready then
+						--[[local minutes = 1
+						local seconds = 0
+						seconds = seconds + (minutes * 60)]]
+						if GetGameTimer() >= 100 and GetGameTimer() <= 160 then
+								CastSpell(_W, boxSpot.x, boxSpot.z)
+						end
+				end
 		end
-	end
 end
 
 function LaneClear()
-  if not GetJungleMob() then
-    for i, minion in ipairs(EnemyMinions.objects) do
-      if minion and not minion.dead then
-        if menu.lane.useW and Wready and GetDistanceSqr(minion) <= 180625 then CastSpell(_W, minion.x, minion.z) end
-        if menu.lane.useE and Eready and GetDistanceSqr(minion) <= 390625 then CastSpell(_E, minion) end
-        if menu.lane.useITEM and TMTREADY and GetDistance(minion) < 275 then CastSpell(TMTSlot) end
-        if menu.lane.useITEM and RAHREADY and GetDistance(minion) < 275 then CastSpell(RAHSlot) end
-      end    
-    end
-  end
+		if not GetJungleMob() then
+				for i, minion in ipairs(EnemyMinions.objects) do
+						if minion and not minion.dead then
+								if menu.lane.useW and Wready and GetDistanceSqr(minion) <= 180625 then CastSpell(_W, minion.x, minion.z) end
+								if menu.lane.useE and Eready and GetDistanceSqr(minion) <= 390625 then CastSpell(_E, minion) end
+								if menu.lane.useITEM and TMTREADY and GetDistance(minion) < 275 then CastSpell(TMTSlot) end
+								if menu.lane.useITEM and RAHREADY and GetDistance(minion) < 275 then CastSpell(RAHSlot) end
+						end 
+				end
+		end
 end
 
 function JungleClear()
-    local JungleMob = GetJungleMob()
-    if JungleMob ~= nil then
-      if menu.jungle.useW and Wready and GetDistanceSqr(JungleMob) <= 180625 then CastSpell(_W, JungleMob.x, JungleMob.z) end
-      if menu.jungle.useE and Eready and GetDistanceSqr(JungleMob) <= 390625 then CastSpell(_E, JungleMob) end
-      if menu.jungle.useITEM and TMTREADY and GetDistance(JungleMob) < 275 then CastSpell(TMTSlot) end
-      if menu.jungle.useITEM and RAHREADY and GetDistance(JungleMob) < 275 then CastSpell(RAHSlot) end
-    end
+		local JungleMob = GetJungleMob()
+		if JungleMob ~= nil then
+				if menu.jungle.useW and Wready and GetDistanceSqr(JungleMob) <= 180625 then CastSpell(_W, JungleMob.x, JungleMob.z) end
+				if menu.jungle.useE and Eready and GetDistanceSqr(JungleMob) <= 390625 then CastSpell(_E, JungleMob) end
+				if menu.jungle.useITEM and TMTREADY and GetDistance(JungleMob) < 275 then CastSpell(TMTSlot) end
+				if menu.jungle.useITEM and RAHREADY and GetDistance(JungleMob) < 275 then CastSpell(RAHSlot) end
+		end
 end
 
 function drawCircles(x,y,z,colour)
@@ -452,7 +452,7 @@ end
 function OnWndMsg(msg,key)
 		if msg == KEY_DOWN and key == string.byte("W") then
 				if Wready then
-					drawboxSpots = true
+						drawboxSpots = true
 				end
 				for i, boxSpot in pairs(boxSpots) do
 						if GetDistance(boxSpot, mousePos) <= 250 then
@@ -465,9 +465,9 @@ function OnWndMsg(msg,key)
 end
 
 function OnBugsplat()
-  UpdateWeb(false, ScriptName, id, HWID)
+		UpdateWeb(false, ScriptName, id, HWID)
 end
 
 function OnUnload()
-  UpdateWeb(false, ScriptName, id, HWID)
+		UpdateWeb(false, ScriptName, id, HWID)
 end
