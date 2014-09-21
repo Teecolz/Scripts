@@ -1,6 +1,6 @@
 if myHero.charName ~= "Aatrox" then return end
 
-local version = 1.01
+local version = 1.1
 local AUTOUPDATE = true
 
 
@@ -67,20 +67,11 @@ local menu
 local ts
 local levelSequence = {3,2,2,1,3,4,3,3,3,2,4,2,1,1,1,4,2,1}
 local target
-local enemyTable = {}
-
-local Prodict
-local ProdictE, ProdictQ
-
 
 local TMTSlot, RAHSlot = nil, nil
 local TMTREADY, RAHREADY = false, false
 local Qready, Wready, Eready, Rready = false, false, false, false
 
-
--------------------------------------------------
--------------------------------------------------
---[OnLoad]--
 function OnLoad()
   VP    = VPrediction()
   iSOW  = SOW(VP)
@@ -92,11 +83,7 @@ function OnLoad()
   EnemyMinions = minionManager(MINION_ENEMY, Erange, myHero, MINION_SORT_MAXHEALTH_DEC)
   jungleMinions = minionManager(MINION_JUNGLE, Erange, myHero, MINION_SORT_MAXHEALTH_DEC)
   UpdateWeb(true, ScriptName, id, HWID)
-  
-  
-  Prodict = ProdictManager.GetInstance()
-  ProdictQ = Prodict:AddProdictionObject(_Q, Qrange, Qspeed, Qdelay, Qwidth)
-  ProdictE = Prodict:AddProdictionObject(_E, Erange, Espeed, Edelay, Ewidth)
+
 end
 
 function Variables()
@@ -168,6 +155,7 @@ function Menu()
 
           menu:addSubMenu("tAatrox: Extras", "extra")
             menu.extra:addParam("autolevel", "AutoLevel Spells", SCRIPT_PARAM_ONOFF, false)
+            menu.extra:addParam("prediction", "Prodiction = ON, VPred = OFF", SCRIPT_PARAM_ONOFF, false)
             menu.extra:addParam("autoQ", "Auto Q enemy under Turrets", SCRIPT_PARAM_ONOFF, false)
             menu.extra:addParam("knockup", "Auto Interrupt Spells w/ Q", SCRIPT_PARAM_ONOFF, false)
             menu.extra:addParam("smartW", "Use Smart W Logic", SCRIPT_PARAM_ONOFF, true)
@@ -184,9 +172,6 @@ function Menu()
       menu.harass:permaShow("harasskey")
 end
 
--------------------------------------------------
--------------------------------------------------
---[OnTick]--
 function OnTick()
   if myHero.dead then return end
   ts:update()
@@ -250,9 +235,6 @@ function spell_check()
   bladeReady = (bladeSlot ~= nil and myHero:CanUseSpell(bladeSlot)  == READY)
 end
 
--------------------------------------------------
--------------------------------------------------
---[Combo]--
 function Combo()
 
   if Qready and menu.combo.useQ then
@@ -275,22 +257,35 @@ end
 
 function UseQ()
   for i, target in pairs(GetEnemyHeroes()) do
+    if menu.extra.prediction then
          local pos, info = Prodiction.GetCircularAOEPrediction(target, Qrange, Qspeed, Qdelay, Qwidth)
-         if pos and GetDistance(pos) < Qrange and info.hitchance >= 1 then
+         if pos and GetDistance(pos) < Qrange and info.hitchance >= 2 then
               CastSpell(_Q, pos.x, pos.z)       
          end
+    else
+          local AOECastPosition, MainTargetHitChance, nTargets = VP:GetCircularAOECastPosition(target, Qdelay, Qwidth, Qrange, Qspeed, myHero)
+          if AOECastPosition and GetDistance(AOECastPosition) < Qrange and MainTargetHitChance >= 2 and nTargets >= 1 then
+            CastSpell(_Q, AOECastPosition.x, AOECastPosition.z)
+          end
+    end
   end
-
 end
 
 function UseE()
   for i, target in pairs(GetEnemyHeroes()) do
+    if menu.extra.prediction then
          local pos, info = Prodiction.GetLineAOEPrediction(target, Erange, Espeed, Edelay, Ewidth)
-         if pos and info.hitchance >= 1 then
+         if pos and info.hitchance >= 2 then
               if target ~= nil and Eready and GetDistance(pos) < Erange then
                   CastSpell(_E, pos.x, pos.z)
               end
          end
+    else
+          local AOECastPosition, MainTargetHitChance, nTargets = VP:GetLineAOECastPosition(target, Edelay, Ewidth, Erange, Espeed, myHero)
+          if AOECastPosition and GetDistance(AOECastPosition) < Erange and MainTargetHitChance >= 2 and nTargets >= 1 then
+            CastSpell(_E, AOECastPosition.x, AOECastPosition.z)
+          end
+    end
   end
 end
 
@@ -375,9 +370,7 @@ function ItemManager(target)
     end
   end
 end
--------------------------------------------------
--------------------------------------------------
---[Harass]--
+
 function Harass()
 
   if target and Eready then 
@@ -386,9 +379,6 @@ function Harass()
 
 end
 
--------------------------------------------------
--------------------------------------------------
---[Clear]--
 function LaneClear()
   if jungleMinion == nil then
     for i, minion in pairs(EnemyMinions.objects) do
@@ -412,9 +402,6 @@ function JungleClear()
   end
 end
 
--------------------------------------------------
--------------------------------------------------
---[Tower Stuff]--
 function UnitAtTower(unit,offset)
   for i, turret in pairs(GetTurrets()) do
     if turret ~= nil then
@@ -436,25 +423,22 @@ function TurretJump()
   end
 end
 
--------------------------------------------------
--------------------------------------------------
---[OnDraw]--
 function OnDraw()
   if myHero.dead then return end
   if menu.draw.drawAA then
-    DrawCircle(myHero.x, myHero.y, myHero.z, AARange, ARGB(255,100,0,50))
+    DrawCircle(myHero.x, myHero.y, myHero.z, AARange, ARGB(255,0,0,80))
   end
   if menu.draw.drawQ and Qready then
-    DrawCircle(myHero.x, myHero.y, myHero.z, Qrange, ARGB(255,100,0,50))
+    DrawCircle(myHero.x, myHero.y, myHero.z, Qrange, ARGB(255,0,0,80))
   end
   if menu.draw.drawW and Wready then
-    DrawCircle(myHero.x, myHero.y, myHero.z, Wrange, ARGB(255,100,0,50))
+    DrawCircle(myHero.x, myHero.y, myHero.z, Wrange, ARGB(255,0,0,80))
   end
   if menu.draw.drawE and Eready then
-    DrawCircle(myHero.x, myHero.y, myHero.z, Erange, ARGB(255,100,0,50))
+    DrawCircle(myHero.x, myHero.y, myHero.z, Erange, ARGB(255,0,0,80))
   end
   if menu.draw.drawR and Rready then
-    DrawCircle(myHero.x, myHero.y, myHero.z, Rrange, ARGB(255,100,0,50))
+    DrawCircle(myHero.x, myHero.y, myHero.z, Rrange, ARGB(255,0,0,80))
   end
 end
 
