@@ -2,7 +2,7 @@ if myHero.charName ~= "Darius" then return end
 
 --[AUTOUPDATER]--
 
-local version = "1.5"
+local version = "1.6"
 local AUTOUPDATE = true
 local SCRIPT_NAME = "tDarius"
 local SOURCELIB_URL = "https://raw.github.com/TheRealSource/public/master/common/SourceLib.lua"
@@ -260,7 +260,7 @@ function Combo()
     if menu.combo.useITEM and RAHREADY and GetDistance(target) < 275 then CastSpell(RAHSlot) end
     if target and menu.combo.useQ and menu.combo.qoptions.qmax and Qready and GetDistance(target) < 425 and GetDistance(target) > 270 then
           if menu.combo.qoptions.packetsQ then
-            Packet("S_CAST", {spellId = _Q,}):send()
+            Packet("S_CAST", {spellId = _Q}):send()
           else
             CastSpell(_Q)
           end
@@ -325,7 +325,7 @@ function Harass()
   if menu.harass.harasskey and target then
     if menu.harass.useQ and GetDistanceSqr(target) <= 180625 then
           if menu.combo.qoptions.packetsQ then
-            Packet("S_CAST", {spellId = _Q, targetNetworkId = target.networkID}):send()
+            Packet("S_CAST", {spellId = _Q}):send()
           else
             CastSpell(_Q)
           end
@@ -500,16 +500,16 @@ end
 
 function draw_Range()
   if menu.draw.drawAA then
-    DrawCircle(myHero.x, myHero.y, myHero.z, AARange, ARGB(255,100,0,50))
+    DrawCircle(myHero.x, myHero.y, myHero.z, AARange, ARGB(255,0,0,80))
   end
   if menu.draw.drawQ and Qready then
-    DrawCircle(myHero.x, myHero.y, myHero.z, Qrange, ARGB(255,100,0,50))
+    DrawCircle(myHero.x, myHero.y, myHero.z, Qrange, ARGB(255,0,0,80))
   end
   if menu.draw.drawE and Eready then
-    DrawCircle(myHero.x, myHero.y, myHero.z, Erange, ARGB(255,100,0,50))
+    DrawCircle(myHero.x, myHero.y, myHero.z, Erange, ARGB(255,0,0,80))
   end
   if menu.draw.drawR and Rready then
-    DrawCircle(myHero.x, myHero.y, myHero.z, Rrange, ARGB(255,100,0,50))
+    DrawCircle(myHero.x, myHero.y, myHero.z, Rrange, ARGB(255,0,0,80))
   end
 end
 
@@ -533,6 +533,8 @@ function killstealR_information()
       local pDmgT = pDmg * enemy.stack
       local pDmgTint = math.floor(pDmgT)
       local Ehealth = math.floor(enemy.object.health)
+      --local drawHealth = math.floor(rDmg / Ehealth)
+      --local drawPHealth = math.floor(pDmgT / Ehealth)
       if pDmgT < enemy.object.health and menu.draw.drawP then
         DrawText3D("["..pDmgT.."/"..Ehealth.."] - passive", enemy.object.x, enemy.object.y, enemy.object.z, 20, RGB(0, 255, 0), 0)
       elseif menu.draw.drawP then
