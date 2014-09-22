@@ -1,6 +1,6 @@
 if myHero.charName ~= "JarvanIV" then return end
 
-local version = 1.0
+local version = 1.1
 local AUTOUPDATE = true
 
 
@@ -58,9 +58,6 @@ function OnLoad()
   Variables()
   UpdateWeb(true, ScriptName, id, HWID)
   ts = TargetSelector(TARGET_LESS_CAST, 900, DAMAGE_PHYSICAL)
-  
-  Prodict = ProdictManager.GetInstance()
-  ProdictQ = Prodict:AddProdictionObject(_Q, Qrange, Qspeed, Qdelay, Qwidth)
 
   Menu = scriptConfig("tJarvan", "tJarvan")
   VP = VPrediction()
@@ -101,8 +98,9 @@ function OnLoad()
 
   Menu:addSubMenu("[tJarvan - Additionals]", "Ads")
      Menu.Ads:addParam("EQcommand", "Key for EQ combo (Escape key)", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("S"))
-     Menu.Ads:addParam("prediction", "Prodiction = ON VPred = OFF", SCRIPT_PARAM_ONOFF, true)
+     Menu.Ads:addParam("prediction", "Prodiction = ON VPred = OFF", SCRIPT_PARAM_ONOFF, false)
      Menu.Ads:addParam("autolevel", "Auto-Level spells (Jungle)", SCRIPT_PARAM_ONOFF, true)
+     Menu.Ads:addParam("packets", "Use Packets to Cast Spells", SCRIPT_PARAM_ONOFF, true)
      
   Menu:addSubMenu("[tJarvan - Ult Blacklist]", "ultb")
             for i, enemy in pairs(GetEnemyHeroes()) do
@@ -119,6 +117,7 @@ function OnLoad()
      ts.name = "Focus"
 
   Menu.Combo:permaShow("combo")
+  Menu.Harass:permaShow("autoharass")
   
  print("<font color = \"#33CCCC\">tJarvan by</font> <font color = \"#fff8e7\">Teecolz Loaded.</font>")
 
@@ -185,7 +184,7 @@ function OnTick()
   end
   
   if UltActive then
-    if CountEnemyHeroInRange(Rwidth) <= 1 then
+    if CountEnemyHeroInRange(Rwidth) == 0 then
       CastSpell(_R)
     end
   end
@@ -213,7 +212,11 @@ function useHarass()
   for i, target in pairs(GetEnemyHeroes()) do
         local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(target, 0.5, 70, 700, 1000, myHero, false)
         if target ~= nil and Qready and ValidTarget(target) and HitChance >= 2 and GetDistance(CastPosition) < 700 then
-            CastSpell(_Q, CastPosition.x, CastPosition.z)
+        	if Menu.Ads.prediction then
+        	    Packet("S_CAST", {spellId = _Q, toX = CastPosition.x, toY = CastPosition.z, fromX = CastPosition.x, fromY = CastPosition.z}):send()
+        	else
+            	CastSpell(_Q, CastPosition.x, CastPosition.z)
+            end
         end
   end
 end
@@ -222,7 +225,11 @@ function useAutoHarass()
   for i, target in pairs(GetEnemyHeroes()) do
         local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(target, 0.5, 70, 700, 1000, myHero, false)
         if target ~= nil and Qready and ValidTarget(target) and HitChance >= 2 and GetDistance(CastPosition) < Qrange and ManaCheck(myHero, Menu.Harass.ahMana) == false then
-            CastSpell(_Q, CastPosition.x, CastPosition.z)
+        	if Menu.Ads.prediction then
+        	    Packet("S_CAST", {spellId = _Q, toX = CastPosition.x, toY = CastPosition.z, fromX = CastPosition.x, fromY = CastPosition.z}):send()
+        	else
+            	CastSpell(_Q, CastPosition.x, CastPosition.z)
+            end
         end
   end
 end
@@ -230,9 +237,13 @@ end
 function killsteal()
   for i, enemy in ipairs (GetEnemyHeroes()) do
     qDmg = getDmg("Q", enemy, myHero)
-    local pos, info = Prodiction.GetPrediction(enemy, Qrange, Qspeed, Qdelay, Qwidth)
-    if Qready and enemy ~= nil and ValidTarget(enemy, Qrange) and enemy.health < qDmg then
-        CastSpell(_Q, pos.x, pos.z)
+    local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(enemy, 0.5, 70, 700, 1000, myHero, false)
+    if Qready and enemy ~= nil and enemy.health < qDmg and GetDistance(CastPosition) < Qrange then
+    	if Menu.Ads.packets then
+    		Packet("S_CAST", {spellId = _Q, toX = CastPosition.x, toY = CastPosition.z, fromX = CastPosition.x, fromY = CastPosition.z}):send()
+    	else
+        	CastSpell(_Q, pos.x, pos.z)
+        end
     end
   end
 end
@@ -311,7 +322,11 @@ function ComboR()
     for i, target in pairs(GetEnemyHeroes()) do
       if target ~= nil and ValidTarget(target, Rrange) and not ultActive then
         if HealthCheck(target, Menu.Combo.RHealth) == true and blCheck(target) then
-          CastSpell(_R, target)
+        	if Menu.Ads.packets then
+        		Packet("S_CAST", {spellId = _R, targetNetworkId = target.networkID}):send()
+        	else
+          		CastSpell(_R, target)
+          	end
         end
       end
     end
@@ -330,16 +345,26 @@ function ComboEQ()
         for i, target in pairs(GetEnemyHeroes()) do
               local CastPosition,  HitChance,  Position = VP:GetCircularCastPosition(target, 0.5, 70, 800, 1000)
               if target ~= nil and Qready and Eready and ValidTarget(target) and HitChance >= 2 and GetDistance(CastPosition) < 800 then
-                  CastSpell(_E, CastPosition.x, CastPosition.z)
-                  CastSpell(_Q, CastPosition.x, CastPosition.z)
+		         	if Menu.Ads.packets then
+		            	Packet("S_CAST", {spellId = _E, toX = CastPosition.x, toY = CastPosition.z, fromX = CastPosition.x, fromY = CastPosition.z}):send()
+		            	Packet("S_CAST", {spellId = _Q, toX = CastPosition.x, toY = CastPosition.z, fromX = CastPosition.x, fromY = CastPosition.z}):send()
+		            else
+		            	CastSpell(_E, CastPosition.x, CastPosition.z)
+		            	CastSpell(_Q, CastPosition.x, CastPosition.z)
+		            end
               end
         end
       else
         for i, target in pairs(GetEnemyHeroes()) do
-              local CastPosition,  HitChance,  Position = VP:GetCircularCastPosition(target, 0.5, 70, 800, 1000)
+              local CastPosition,  HitChance,  CastPosition = VP:GetCircularCastPosition(target, 0.5, 70, 800, 1000)
               if target ~= nil and ValidTarget(target) and HitChance >= 2 and GetDistance(CastPosition) < 800 then
-                  CastSpell(_E, CastPosition.x, CastPosition.z)
-                  CastSpell(_Q, CastPosition.x, CastPosition.z)
+		         	if Menu.Ads.packets then
+		            	Packet("S_CAST", {spellId = _E, toX = CastPosition.x, toY = CastPosition.z, fromX = CastPosition.x, fromY = CastPosition.z}):send()
+		            	Packet("S_CAST", {spellId = _Q, toX = CastPosition.x, toY = CastPosition.z, fromX = CastPosition.x, fromY = CastPosition.z}):send()
+		            else
+		            	CastSpell(_E, CastPosition.x, CastPosition.z)
+		            	CastSpell(_Q, CastPosition.x, CastPosition.z)
+		            end
               end
         end
       end
@@ -351,16 +376,26 @@ function prodictionEQ()
         for i, target in pairs(GetEnemyHeroes()) do
          local pos, info = Prodiction.GetPrediction(target, Qrange, Qspeed, Qdelay, Qwidth)
          if pos and Qready and Eready and ValidTarget(target) and GetDistance(pos) < 800 then
-            CastSpell(_E, pos.x, pos.z)
-            CastSpell(_Q, pos.x, pos.z)
+         	if Menu.Ads.packets then
+            	Packet("S_CAST", {spellId = _E, toX = pos.x, toY = pos.z, fromX = pos.x, fromY = pos.z}):send()
+            	Packet("S_CAST", {spellId = _Q, toX = pos.x, toY = pos.z, fromX = pos.x, fromY = pos.z}):send()
+            else
+            	CastSpell(_E, pos.x, pos.z)
+            	CastSpell(_Q, pos.x, pos.z)
+            end
          end
         end
       else
         for i, target in pairs(GetEnemyHeroes()) do
          local pos, info = Prodiction.GetPrediction(target, Qrange, Qspeed, Qdelay, Qwidth)
          if pos and ValidTarget(target) and GetDistance(pos) < 800 then
-            CastSpell(_E, pos.x, pos.z)
-            CastSpell(_Q, pos.x, pos.z)
+         	if Menu.Ads.packets then
+            	Packet("S_CAST", {spellId = _E, toX = pos.x, toY = pos.z, fromX = pos.x, fromY = pos.z}):send()
+            	Packet("S_CAST", {spellId = _Q, toX = pos.x, toY = pos.z, fromX = pos.x, fromY = pos.z}):send()
+            else
+            	CastSpell(_E, pos.x, pos.z)
+            	CastSpell(_Q, pos.x, pos.z)
+            end
          end
         end
       end
@@ -382,7 +417,7 @@ function OnDraw()
   end
   
   if Menu.drawings.drawCircleAA then
-    DrawCircle(myHero.x, myHero.y, myHero.z, 250, ARGB(255, 0, 255, 0))
+    DrawCircle(myHero.x, myHero.y, myHero.z, 250, ARGB(255, 0, 0, 80))
   end
 
   if Menu.drawings.drawCircleR then
