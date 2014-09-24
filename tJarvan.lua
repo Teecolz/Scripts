@@ -1,6 +1,6 @@
 if myHero.charName ~= "JarvanIV" then return end
 
-local version = 1.1
+local version = 1.12
 local AUTOUPDATE = true
 
 
@@ -238,7 +238,7 @@ function killsteal()
   for i, enemy in ipairs (GetEnemyHeroes()) do
     qDmg = getDmg("Q", enemy, myHero)
     local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(enemy, 0.5, 70, 700, 1000, myHero, false)
-    if Qready and enemy ~= nil and enemy.health < qDmg and GetDistance(CastPosition) < Qrange then
+    if Qready and enemy ~= nil and not enemy.dead and enemy.health < qDmg and GetDistance(CastPosition) < Qrange then
     	if Menu.Ads.packets then
     		Packet("S_CAST", {spellId = _Q, toX = CastPosition.x, toY = CastPosition.z, fromX = CastPosition.x, fromY = CastPosition.z}):send()
     	else
