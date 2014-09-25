@@ -2,7 +2,7 @@ if myHero.charName ~= "Darius" then return end
 
 --[AUTOUPDATER]--
 
-local version = "1.6"
+local version = "1.7"
 local AUTOUPDATE = true
 local SCRIPT_NAME = "tDarius"
 local SOURCELIB_URL = "https://raw.github.com/TheRealSource/public/master/common/SourceLib.lua"
@@ -89,7 +89,7 @@ function OnLoad()
   Init()
   PrintChat("<font color=\"#78CCDB\"><b>" ..">> tDarius has been loaded")
   Loaded = true
-  iSOW:RegisterAfterAttackCallback(Wreset)
+  iSOW:RegisterOnAttackCallback(Wreset)
   JungVariables()
   EnemyMinions = minionManager(MINION_ENEMY, 425, myHero, MINION_SORT_HEALTH_ASC)
   UpdateWeb(true, ScriptName, id, HWID)
@@ -107,7 +107,7 @@ end
 
 
 function Init()
-    ts = TargetSelector(TARGET_LESS_CAST, 540, DAMAGE_PHYSICAL)
+    ts = TargetSelector(TARGET_LOW_HP, 540, DAMAGE_PHYSICAL)
 end
   
 function Menu()  
@@ -131,10 +131,10 @@ function Menu()
             menu.combo:addParam("packets", "Use Packets for Ult", SCRIPT_PARAM_ONOFF, true)
 
           menu:addSubMenu("tDarius: Harass", "harass")
-            menu.harass:addParam("harasskey", "Harass", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("C"))
-            menu.harass:addParam("useQ", "Use Q-Spell", SCRIPT_PARAM_ONOFF, true)
+            menu.harass:addParam("harasskey", "Harass (Q)", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("C"))
+            --menu.harass:addParam("useQ", "Use Q-Spell", SCRIPT_PARAM_ONOFF, true)
             menu.harass:addParam("autoQ", "Q Max Dmg Auto Harras", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("Y")) -- I suggest you to add an option to automagically disable this under turret ;) unless turret focus on another ally (or already on me) I'm not sure, but I think that requires packets though. check it please ;p
-            menu.harass:addParam("mana", "Dont Harass if mana < %", SCRIPT_PARAM_SLICE, 0, 0, 100)
+            menu.harass:addParam("mana", "Dont Auto Q Harass if mana < %", SCRIPT_PARAM_SLICE, 0, 0, 100)
             
           menu:addSubMenu("tDarius: Lane Clear", "lane")
             menu.lane:addParam("lanekey", "Lane Clear", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("Z"))
@@ -184,9 +184,7 @@ end
 --[OnTick]--
 function OnTick()
   if myHero.dead then return end
-  if Loaded then
-    ts:update()
-  end
+  ts:update()
   EnemyMinions:update()
   spell_check()
   if menu.extra.autolevel then
@@ -197,7 +195,7 @@ function OnTick()
   if menu.combo.combokey then
     Combo()
   end
-  if menu.harass.harasskey then
+  if menu.harass.harasskey and Qready then
     Harass()
   end
   if menu.lane.lanekey then
@@ -213,8 +211,8 @@ function OnTick()
     killstealQ()
   end
 
-  local target = ts.target
-  if menu.harass.autoQ then
+  target = ts.target
+  --[[if menu.harass.autoQ then
     if menu.harass.mana < (myHero.mana / myHero.maxMana) * 100 then
      if target and not UnitAtTower(target, 0) and Qready and GetDistance(target) < 405 and GetDistance(target) > 270 then
           if menu.combo.qoptions.packetsQ then
@@ -224,7 +222,34 @@ function OnTick()
           end
       end  
     end
+  end]]
+
+  for i, enemy in ipairs(GetEnemyHeroes()) do
+	if menu.harass.autoQ and not menu.combo.combokey and not menu.harass.harasskey and Qready then
+		AutoQ()
+		--if menu.extra.debug then print("Passed it to AutoQ()") end
+	end
   end
+
+end
+
+function AutoQ()
+
+	--if menu.harass.mana < (myHero.mana / myHero.maxMana) * 100 then
+	for i, enemy in pairs(GetEnemyHeroes()) do
+	  if menu.harass.mana < (myHero.mana / myHero.maxMana) * 100 and not UnitAtTower(enemy, 0) then
+		if enemy and not enemy.dead and GetDistance(enemy) < 405 and GetDistance(enemy) > 270 then
+		  if menu.combo.qoptions.packetsQ then
+            Packet("S_CAST", {spellId = _Q, targetNetworkId = enemy.networkID}):send()
+            if menu.extra.debug then print("Paacket AutoQ") end
+          else
+            CastSpell(_Q)
+            if menu.extra.debug then print("Reg AutoQ") end
+          end
+        end
+      end
+    end
+
 end
 
 function spell_check()
@@ -253,23 +278,31 @@ end
 --[Combo]--
 function Combo()
   local Enemies = GetEnemyHeroes
-  local target  = ts.target
 
-  if ts.target then
+  if target then
     if menu.combo.useITEM and TMTREADY and GetDistance(target) < 275 then CastSpell(TMTSlot) end
     if menu.combo.useITEM and RAHREADY and GetDistance(target) < 275 then CastSpell(RAHSlot) end
-    if target and menu.combo.useQ and menu.combo.qoptions.qmax and Qready and GetDistance(target) < 425 and GetDistance(target) > 270 then
-          if menu.combo.qoptions.packetsQ then
-            Packet("S_CAST", {spellId = _Q}):send()
-          else
+    if menu.combo.useQ and Qready and ValidTarget(target, 425) then
+      	if menu.extra.debug then print('Found valid target in Qrange!') end
+		if menu.combo.qoptions.qmax then
+	    	if GetDistance(target) > 270 then
+		          --[[if menu.combo.qoptions.packetsQ then
+		            Packet("S_CAST", {spellId = _Q, targetNetworkId = target.networkID}):send()
+		          	if menu.extra.debug then print("Combo PacketQ") end
+		          else]]
+		            CastSpell(_Q)
+		            if menu.extra.debug then print("Combo RegQ") end
+		          --end
+		    end
+		else
+          --[[if menu.combo.qoptions.packetsQ then
+            Packet("S_CAST", {spellId = _Q, targetNetworkId = target.networkID}):send()
+            if menu.extra.debug then print("Combo PacketQ") end
+          else]]
             CastSpell(_Q)
-          end
-    elseif target and menu.combo.useQ and GetDistanceSqr(target) <= 180625 and Qready then
-          if menu.combo.qoptions.packetsQ then
-            Packet("S_CAST", {spellId = _Q}):send()
-          else
-            CastSpell(_Q)
-          end
+            if menu.extra.debug then print("Combo RegQ") end
+          --end
+	    end
     end
     if menu.combo.useE and target and GetDistance(target) > menu.combo.minE and GetDistanceSqr(target) <= 291600 and Eready then 
       local AOECastPosition, MainTargetHitChance, nTargets = VP:GetLineAOECastPosition(target, 0.5, 225, Erange, 1500, myHero, false)
@@ -279,11 +312,11 @@ function Combo()
     end
     if Rready and menu.combo.useR then
       if blCheck(target) then
-        for i, enemy in pairs(enemyTable) do
+        for i, enemy in ipairs(enemyTable) do
            if enemy.object == target and GetDistance(target) < 460 then
               local multiplier = GetMultiplier(enemy.stack)
               local rDmg = multiplier * getDmg("R", target, myHero)
-              if target.health <= rDmg*(menu.combo.rBuffer/100) then
+              if target.health <= rDmg*(menu.combo.rBuffer/100) and not target.dead and not enemy.dead then
                   if menu.combo.packets then
                     Packet("S_CAST", {spellId = _R, targetNetworkId = target.networkID}):send()
                     if menu.extra.debug then print("Casted with packet") end
@@ -318,19 +351,21 @@ end
 -------------------------------------------------
 --[Harass]--
 function Harass()
-  local Enemies = GetEnemyHeroes
-  local target = ts.target
-  if menu.harass.mana > (myHero.mana / myHero.maxMana) * 100 then return end
+  --if menu.harass.mana > (myHero.mana / myHero.maxMana) * 100 then return end
 
-  if menu.harass.harasskey and target then
-    if menu.harass.useQ and GetDistanceSqr(target) <= 180625 then
-          if menu.combo.qoptions.packetsQ then
-            Packet("S_CAST", {spellId = _Q}):send()
-          else
-            CastSpell(_Q)
-          end
-    end
-  end
+	  for i, enemy in pairs(GetEnemyHeroes()) do
+	  		--if menu.extra.debug then print('I got past the pears') end
+		    if GetDistance(enemy) < 425 then
+		    	  if menu.extra.debug then print('I found my target') end
+		          --[[if menu.combo.qoptions.packetsQ then
+		            Packet("S_CAST", {spellId = _Q, targetNetworkId = enemy.networkID}):send()
+		            if menu.extra.debug then print("Harass packetQ") end
+		          else]]
+		            CastSpell(_Q)
+		            if menu.extra.debug then print("Harass RegQ") end
+		          --end
+		    end
+	  end
 end
 
 -------------------------------------------------
@@ -467,25 +502,27 @@ end
 -------------------------------------------------
 --[KillSteal]--
 function killstealR()
-if menu.killsteal.killstealR then -- why even bother checking the rest and calculating dmg if killstealR is off ;)
-  for i, enemy in pairs(enemyTable) do
-     if GetDistance(enemy.object) < 460 then
-          if blCheck(enemy.object) then
-       local multiplier = GetMultiplier(enemy.stack)
-       local rDmg = multiplier * getDmg("R", enemy.object, myHero)
-       if enemy.object.health <= rDmg*(menu.combo.rBuffer/100) then
-          if menu.combo.packets then
-              Packet("S_CAST", {spellId = _R, targetNetworkId = enemy.networkID}):send()
-              if menu.extra.debug then print("Casted with packet") end
-          else
-             if menu.extra.debug then print("Combo ult casted") end
-             CastSpell(_R, enemy.object)
-          end
-       end
-       end
-      end
-    end
-  end
+	if menu.killsteal.killstealR then -- why even bother checking the rest and calculating dmg if killstealR is off ;)
+	  for i, enemy in ipairs(enemyTable) do
+	     if Rready and GetDistance(enemy.object) < 460 then
+	          if blCheck(enemy.object) then
+		       local multiplier = GetMultiplier(enemy.stack)
+		       local rDmg = multiplier * getDmg("R", enemy.object, myHero)
+		       local swag = enemy.object
+		       if enemy.object.health <= rDmg*(menu.combo.rBuffer/100) and not swag.dead then
+		          if menu.combo.packets then
+
+		              Packet("S_CAST", {spellId = _R, targetNetworkId = swag.networkID}):send()
+		              if menu.extra.debug then print("Casted with packet") end
+		          else
+		             if menu.extra.debug then print("Combo ult casted") end
+		             CastSpell(_R, enemy.object)
+		          end
+		       end
+	     	  end
+	     end
+	  end
+	end
 end
 
 -------------------------------------------------
@@ -578,7 +615,7 @@ function OnGainBuff(unit, buff)
       end
     end
   end
-  if menu.extra.debug then print(enemyTable) end
+  --if menu.extra.debug then print(enemyTable) end
 end
 
 function OnLoseBuff(unit, buff)
