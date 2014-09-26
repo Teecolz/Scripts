@@ -1,6 +1,6 @@
 if myHero.charName ~= "Malzahar" then return end
 
-local version = "1.0"
+local version = "1.1"
 local AUTOUPDATE = true
 local SCRIPT_NAME = "tMalzahar"
 local SOURCELIB_URL = "https://raw.github.com/TheRealSource/public/master/common/SourceLib.lua"
@@ -39,7 +39,6 @@ assert(load(Base64Decode("G0x1YVIAAQQEBAgAGZMNChoKAAAAAAAAAAAAAQIDAAAAJQAAAAgAAI
 require 'SOW'
 require 'VPrediction'
 require 'Prodiction'
-require 'Sourcelib'
 
 local menu
 local ts
@@ -54,19 +53,13 @@ function OnLoad()
   VP = VPrediction()
   iSOW = SOW(VP)
   Menu()
-  PrintChat("<font color=\"#78CCDB\"><b>" ..">> tMalzahar has been loaded!")
+  print("<font color=\"#78CCDB\"><b>" ..">> tMalzahar has been loaded!")
   Loaded = true
   Variables()
   EnemyMinions = minionManager(MINION_ENEMY, 800, myHero, MINION_SORT_HEALTH_ASC)
-  ts = TargetSelector(TARGET_LOW_HP, 900, DAMAGE_MAGIC)
+  ts = TargetSelector(TARGET_LESS_CAST, 850, DAMAGE_MAGIC)
   UpdateWeb(true, ScriptName, id, HWID)
-    
-      if VIP_USER then
-        Prodict = ProdictManager.GetInstance()
-        ProdictQ = Prodict:AddProdictionObject(_Q, Qrange, Qspeed, Qdelay, Qwidth)
-        ProdictW = Prodict:AddProdictionObject(_W, Wrange, Wspeed, Wdelay, Wwidth)
-      end
-  
+
 end
 
 function Variables()
@@ -135,6 +128,7 @@ function Menu()
           menu:addSubMenu("tMalzahar: Killsteal", "killsteal")
             menu.killsteal:addParam("killstealE", "Use E-Spell to Killsteal", SCRIPT_PARAM_ONOFF, true)
             menu.killsteal:addParam("killstealQ", "Use Q-Spell to Killsteal", SCRIPT_PARAM_ONOFF, true)
+            menu.killsteal:addParam("killstealR", "Use R-Spell to Killsteal", SCRIPT_PARAM_ONOFF, false)
 
           menu:addSubMenu("tMalzahar: Drawings", "draw")
             menu.draw:addParam("drawAA", "Draw AA Range", SCRIPT_PARAM_ONOFF, true)
@@ -162,10 +156,10 @@ end
 
 function OnTick()
   if myHero.dead then return end
-  if Loaded then
+
     ts:update()
     SkinHack()
-  end
+
   EnemyMinions:update()
   spell_check()
   target = ts.target
@@ -197,6 +191,8 @@ function OnTick()
   end]]
   
   DmgCheck()
+
+  KS()
   
   if UltOn and _G.AutoCarry and _G.AutoCarry.MyHero then
     _G.AutoCarry.MyHero:AttacksEnabled(false)
@@ -246,7 +242,7 @@ function Combo()
 end
 
 function CastQ()
-  for i, enemy in pairs(GetEnemyHeroes()) do
+  for i, enemy in ipairs(GetEnemyHeroes()) do
     if GetDistance(enemy) < menu.extra.Qrange and not UltOn then
       if menu.extra.prediction then
            --local pos, info = Prodiction.GetLineAOEPrediction(enemy, Qrange, Qspeed, (Qdelay + 200)/1600, Qwidth)
@@ -256,9 +252,11 @@ function CastQ()
            end
       else
            --local AOECastPosition, MainTargetHitChance, nTargets = VP:GetLineAOECastPosition(enemy, Qdelay, Qradius, Qrange, Qspeed)
-           local CastPosition, HitChance, nTargets = VP:GetCircularCastPosition(enemy, Qdelay, Qradius, menu.extra.Qrange, Qspeed)
-           if GetDistance(CastPosition) < menu.extra.Qrange and HitChance >= 3 and nTargets >= 1 then
+           local CastPosition, HitChance, nTargets = VP:GetCircularCastPosition(enemy, Qdelay, Qradius, menu.extra.Qrange, Qspeed, myHero, false)
+           if GetDistance(CastPosition) < Qrange and HitChance >= 3 then
+           	  if menu.extra.debug then print('Tried to Cast Q VPRED') end
               CastSpell(_Q, CastPosition.x, CastPosition.z)
+              if menu.extra.debug then print('Casted Q VPRED') end
            end
       end
     end
@@ -273,9 +271,11 @@ function CastW()
             CastSpell(_W, pos.x, pos.z)
          end
     else
-         local AOECastPosition, MainTargetHitChance, nTargets = VP:GetCircularAOECastPosition(target, Wdelay, Wradius, Wrange, Wspeed)
+         local AOECastPosition, MainTargetHitChance, nTargets = VP:GetCircularAOECastPosition(target, Wdelay, Wradius, Wrange, Wspeed, myHero)
          if GetDistance(AOECastPosition) < Wrange and MainTargetHitChance >= 2 and nTargets >= 1 then
-          CastSpell(_W, AOECastPosition.x, AOECastPosition.z)
+         	if menu.extra.debug then print('Tried to Cast W VPRED') end
+          	CastSpell(_W, AOECastPosition.x, AOECastPosition.z)
+          	if menu.extra.debug then print('Casted W VPRED') end
          end
     end
   end 
@@ -289,12 +289,13 @@ end
 
 function CastR()
   if not UltOn then
-    for i, enemy in pairs(GetEnemyHeroes()) do
-      if GetDistance(enemy) < Rrange and blCheck(target) then
+    for i, enemy in ipairs(GetEnemyHeroes()) do
+      if GetDistance(enemy) < Rrange and blCheck(enemy) then
         local rDmg = getDmg("R", enemy, myHero)
-        local AP = getDmg("AD", target, myHero)
-        local FullRDamage = (rDmg + (AP*1.2))
-        if enemy.health < rDmg and enemy.health > 100 then
+        if menu.extra.debug then print(tostring(rDmg)) end
+        --[[local AP = getDmg("AD", target, myHero)
+        local FullRDamage = (rDmg + (AP*1.2))]]
+        if enemy.health < rDmg and enemy.health > 50 then
           CastSpell(_R, enemy)
         end
       end
@@ -305,21 +306,26 @@ end
 function KS()
   if UltOn then return end
   for i, enemy in pairs(GetEnemyHeroes()) do
-    if GetDistance(enemy) < Qrange then
-      if enemy.health < qDmg and Qready and menu.killsteal.killstealQ then
-         local pos, info = Prodiction.GeLineAOEtPrediction(enemy, Qrange, Qspeed, Qdelay, Qwidth)
+  	local rDmg = getDmg("R", enemy, myHero)
+  	local qDmg = getDmg("Q", enemy, myHero)
+	if enemy.health < eDmg then
+		if Eready and GetDistance(enemy) < Erange and menu.killsteal.killstealE then
+	    	CastSpell(_E, enemy)
+	    end
+    elseif enemy.health < qDmg then
+      if GetDistance(enemy) < Qrange and Qready and menu.killsteal.killstealQ then
+         local pos, info = Prodiction.GeLineAOEPrediction(enemy, Qrange, Qspeed, Qdelay, Qwidth)
          if pos and info.hitchance >= 2 and GetDistance(pos) <= Qrange then
             CastSpell(_Q, pos.x, pos.z)
          end
-      elseif enemy.health < eDmg and Eready and GetDistance(enemy) < Erange and menu.killsteal.killstealE then
-          CastSpell(_E, enemy)
       end
+    elseif enemy.health < rDmg and blCheck(enemy) and menu.killsteal.killstealR and Rready and GetDistance(enemy) < Rrange then
+    	CastSpell(_R, enemy)
     end
   end
 end
 
 function Harass()
-  if target == nil then return end
 
   if menu.harass.mana > (myHero.mana / myHero.maxMana) * 100 then return end
   
