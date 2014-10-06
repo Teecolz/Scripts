@@ -2,7 +2,7 @@ if myHero.charName ~= "Darius" then return end
 
 --[AUTOUPDATER]--
 
-local version = "1.7"
+local version = "1.72"
 local AUTOUPDATE = true
 local SCRIPT_NAME = "tDarius"
 local SOURCELIB_URL = "https://raw.github.com/TheRealSource/public/master/common/SourceLib.lua"
@@ -317,13 +317,15 @@ function Combo()
               local multiplier = GetMultiplier(enemy.stack)
               local rDmg = multiplier * getDmg("R", target, myHero)
               if target.health <= rDmg*(menu.combo.rBuffer/100) and not target.dead and not enemy.dead then
-                  if menu.combo.packets then
-                    Packet("S_CAST", {spellId = _R, targetNetworkId = target.networkID}):send()
-                    if menu.extra.debug then print("Casted with packet") end
-                  else
-                    if menu.extra.debug then print("Combo ult casted") end
-                    CastSpell(_R, target)
-                  end
+              	if not (TargetHaveBuff("JudicatorIntervention", target) or TargetHaveBuff("Undying Rage", target)) then
+	                  if menu.combo.packets then
+	                    Packet("S_CAST", {spellId = _R, targetNetworkId = target.networkID}):send()
+	                    if menu.extra.debug then print("Casted with packet") end
+	                  else
+	                    if menu.extra.debug then print("Combo ult casted") end
+	                    CastSpell(_R, target)
+	                  end
+	            end
               end
            end
           end
@@ -502,22 +504,23 @@ end
 -------------------------------------------------
 --[KillSteal]--
 function killstealR()
-	if menu.killsteal.killstealR then -- why even bother checking the rest and calculating dmg if killstealR is off ;)
+	if menu.killsteal.killstealR then
 	  for i, enemy in ipairs(enemyTable) do
 	     if Rready and GetDistance(enemy.object) < 460 then
 	          if blCheck(enemy.object) then
 		       local multiplier = GetMultiplier(enemy.stack)
 		       local rDmg = multiplier * getDmg("R", enemy.object, myHero)
 		       local swag = enemy.object
-		       if enemy.object.health <= rDmg*(menu.combo.rBuffer/100) and not swag.dead then
-		          if menu.combo.packets then
-
-		              Packet("S_CAST", {spellId = _R, targetNetworkId = swag.networkID}):send()
-		              if menu.extra.debug then print("Casted with packet") end
-		          else
-		             if menu.extra.debug then print("Combo ult casted") end
-		             CastSpell(_R, enemy.object)
-		          end
+		       if swag.health <= rDmg*(menu.combo.rBuffer/100) and not swag.dead then
+		       		if not (TargetHaveBuff("JudicatorIntervention", swag) or TargetHaveBuff("Undying Rage", swag)) then
+			          if menu.combo.packets then
+			              Packet("S_CAST", {spellId = _R, targetNetworkId = swag.networkID}):send()
+			              if menu.extra.debug then print("Casted with packet") end
+			          else
+			             if menu.extra.debug then print("Combo ult casted") end
+			             CastSpell(_R, swag)
+			          end
+			        end
 		       end
 	     	  end
 	     end
