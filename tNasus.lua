@@ -1,19 +1,10 @@
---[[
-
-  tNasus - updated version + SBTW version of Hellsing's nasus
-  
-  
-  ]]
-
 if myHero.charName ~= "Nasus" then return end
 
-local version = 1.02
+local version = 1.1
 local AUTOUPDATE = true
 
 require "SOW"
 require "VPrediction"
-require "Sourcelib"
-
 
 local SCRIPT_NAME = "tNasus"
 local SOURCELIB_URL = "https://raw.github.com/TheRealSource/public/master/common/SourceLib.lua"
@@ -34,6 +25,7 @@ end
 local RequireI = Require("SourceLib")
 RequireI:Add("vPrediction", "https://raw.github.com/Hellsing/BoL/master/common/VPrediction.lua")
 RequireI:Add("SOW", "https://raw.github.com/Hellsing/BoL/master/common/SOW.lua")
+RequireI:Add("JungleLib", "https://bitbucket.org/Hellsing/botoflegends/raw/master/lib/JungleLib.lua")
 
 RequireI:Check()
 
@@ -58,7 +50,7 @@ DashList = {
         ['Diana']       = {true, spell = 'DianaTeleport'}, -- Targeted ability
         ['Elise']       = {true, spell = 'EliseSpiderQCast'}, -- Targeted ability
         ['Fiora']       = {true, spell = 'FioraQ'}, -- Targeted ability
-        ['Fizz']      = {true, spell = 'FizzPiercingStrike'}, -- Targeted ability
+        ['Fizz']      	= {true, spell = 'FizzPiercingStrike'}, -- Targeted ability
         ['Gragas']      = {true, spell = 'GragasE'},
         ['Graves']      = {true, spell = 'GravesMove'},
         ['Hecarim']     = {true, spell = 'HecarimUlt'},
@@ -74,24 +66,23 @@ DashList = {
         ['Lucian']      = {true, spell = 'LucianE'},
         ['Malphite']    = {true, spell = 'UFSlash'},
         ['Maokai']      = {true, spell = 'MaokaiTrunkLine',}, -- Targeted ability 
-    ['MasterYi']    = {true, spell = 'AlphaStrike',}, -- Targeted
+    	['MasterYi']    = {true, spell = 'AlphaStrike',}, -- Targeted
         ['MonkeyKing']  = {true, spell = 'MonkeyKingNimbus'}, -- Targeted ability
         ['Nidalee']     = {true, spell = 'Pounce'},
         ['Pantheon']    = {true, spell = 'PantheonW'}, -- Targeted ability
         ['Pantheon']    = {true, spell = 'PantheonRJump'},
         ['Pantheon']    = {true, spell = 'PantheonRFall'},
         ['Poppy']       = {true, spell = 'PoppyHeroicCharge'}, -- Targeted ability
-      --['Quinn']       = {true, spell = 'QuinnE',                  range = 725,   projSpeed = 2000, }, -- Targeted ability
         ['Rammus']      = {true, spell = 'PowerBall'},
         ['Renekton']    = {true, spell = 'RenektonSliceAndDice'},
-        ['Riven']     = {true, spell = 'RivenFeint'},
+        ['Riven']     	= {true, spell = 'RivenFeint'},
         ['Sejuani']     = {true, spell = 'SejuaniArcticAssault'},
         ['Shyvana']     = {true, spell = 'ShyvanaTransformCast'},
         ['Shen']        = {true, spell = 'ShenShadowDash'},
         ['Talon']       = {true, spell = 'TalonCutthroat'},
         ['Tristana']    = {true, spell = 'RocketJump'},
         ['Tryndamere']  = {true, spell = 'Slash'},
-        ['Vi']      = {true, spell = 'ViQ'},
+        ['Vi']     		= {true, spell = 'ViQ'},
         ['XinZhao']     = {true, spell = 'XenZhaoSweep'}, -- Targeted ability
         ['Yasuo']       = {true, spell = 'YasuoDashWrapper'} -- Targeted ability
 }
@@ -126,40 +117,16 @@ local BASE_ATTACKSPEED       = 0.638
 local ITEMS = { [3057] = { name = "Sheen",            unique = "SPELLBLADE", buffName = "sheen",          buffActive = false, bonusDamage = 0, multiplier = 1 },
                 [3025] = { name = "Iceborn Gauntlet", unique = "SPELLBLADE", buffName = "itemfrozenfist", buffActive = false, bonusDamage = 0, multiplier = 1.25} }
 
-
---[[
- _______  _____  ______  _______
- |       |     | |     \ |______
- |_____  |_____| |_____/ |______
-]]
-
 function OnLoad()
 
   VP    = VPrediction()
   iSOW  = SOW(VP)
-  
-  -- iSOW:RegisterAfterAttackCallback(Qreset)
 
-    -- Aquire JungleLib
-    DownloadFile("https://bitbucket.org/Hellsing/botoflegends/raw/master/lib/JungleLib.lua", LIB_PATH .. "JungleLib.lua",
-        function ()
-            require "JungleLib"
-            jungleLib = JungleLib()
-        end
-    )
-    
-    UpdateWeb(true, ScriptName, id, HWID)
-    
-
-  --[TargetSelector]--
     ts = TargetSelector(TARGET_LOW_HP, 600)
     ts.name = "Nasus"
     
-    
-    -- Enemy minion manager
-    enemyMinions = minionManager(MINION_ENEMY, 1000, player, MINION_SORT_MAXHEALTH_DEC)
+    enemyMinions = minionManager(MINION_ENEMY, 1000, myHero, MINION_SORT_MAXHEALTH_DEC)
 
-    -- Menu
     menu = scriptConfig("tNasus", "tNasus")
 
     menu:addSubMenu("tNasus: Orbwalk", "Orbwalk")
@@ -206,7 +173,9 @@ function OnLoad()
     menu:addParam("combo", "Combo", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("T"))
     menu:addParam("escape", "Escape", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("S"))
     
-    PrintChat("<font color=\"#0DF8FF\">tNasus Loaded Successfully (Credit to Hellsing)</font> ")
+    print("<font color=\"#0DF8FF\">tNasus Loaded Successfully</font> ")
+
+    UpdateWeb(true, ScriptName, id, HWID)
     
 
 end
