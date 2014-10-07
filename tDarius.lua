@@ -2,7 +2,7 @@ if myHero.charName ~= "Darius" then return end
 
 --[AUTOUPDATER]--
 
-local version = "1.72"
+local version = "1.73"
 local AUTOUPDATE = true
 local SCRIPT_NAME = "tDarius"
 local SOURCELIB_URL = "https://raw.github.com/TheRealSource/public/master/common/SourceLib.lua"
@@ -224,12 +224,10 @@ function OnTick()
     end
   end]]
 
-  for i, enemy in ipairs(GetEnemyHeroes()) do
-	if menu.harass.autoQ and not menu.combo.combokey and not menu.harass.harasskey and Qready then
-		AutoQ()
-		--if menu.extra.debug then print("Passed it to AutoQ()") end
-	end
-  end
+if menu.harass.autoQ and not menu.combo.combokey and not menu.harass.harasskey and Qready then
+        AutoQ()
+        --if menu.extra.debug then print("Passed it to AutoQ()") end
+end
 
 end
 
