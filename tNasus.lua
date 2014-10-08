@@ -1,6 +1,6 @@
 if myHero.charName ~= "Nasus" then return end
 
-local version = 1.1
+local version = 1.12
 local AUTOUPDATE = true
 
 require "SOW"
@@ -121,6 +121,7 @@ function OnLoad()
 
   VP    = VPrediction()
   iSOW  = SOW(VP)
+  jungleLib = JungleLib()
 
     ts = TargetSelector(TARGET_LOW_HP, 600)
     ts.name = "Nasus"
