@@ -1,6 +1,6 @@
 if myHero.charName ~= "Aatrox" then return end
 
-local version = 1.1
+local version = 1.12
 local AUTOUPDATE = true
 
 
@@ -496,14 +496,14 @@ function killsteal()
       if enemy.health < eDmg and GetDistance(enemy) < Erange then
          local pos, info = Prodiction.GetLineAOEPrediction(enemy, Erange, Espeed, Edelay, Ewidth)
          if pos and info.hitchance >= 1 then
-              if enemy ~= nil and Eready and GetDistance(pos) < Erange then
+              if enemy ~= nil and Eready and GetDistance(pos) < Erange and not enemy.dead then
                   CastSpell(_E, pos.x, pos.z)
               end
          end
       elseif enemy.health < qDmg and GetDistance(enemy) < Qrange then
          local pos, info = Prodiction.GetCircularAOEPrediction(enemy, Qrange, Qspeed, Qdelay, Qwidth)
          if pos and GetDistance(pos) < Qrange and info.hitchance >= 1 then
-             if Qready and enemy ~= nil and enemy.health < qDmg and CountEnemies(500, pos) < 2 then
+             if Qready and enemy ~= nil and not enemy.dead and enemy.health < qDmg and CountEnemies(500, pos) < 2 then
                   CastSpell(_Q, pos.x, pos.z)      
              end 
          end
