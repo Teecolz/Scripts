@@ -1,6 +1,6 @@
 if myHero.charName ~= "Shaco" then return end
 
-local version = 1.0
+local version = 1.1
 local AUTOUPDATE = true
 
 
@@ -136,7 +136,7 @@ function OnLoad()
 	
 	print("<font color=\"#78CCDB\"><b>" ..">> tShaco successfully loaded ;)")
 	
-	UpdateWeb(true, ScriptName, id, HWID)
+	--UpdateWeb(true, ScriptName, id, HWID)
 	
 end
 
@@ -465,9 +465,9 @@ function OnWndMsg(msg,key)
 end
 
 function OnBugsplat()
-	UpdateWeb(false, ScriptName, id, HWID)
+	--UpdateWeb(false, ScriptName, id, HWID)
 end
 
 function OnUnload()
-	UpdateWeb(false, ScriptName, id, HWID)
+	--UpdateWeb(false, ScriptName, id, HWID)
 end
