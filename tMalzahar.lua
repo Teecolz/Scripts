@@ -1,6 +1,6 @@
 if myHero.charName ~= "Malzahar" then return end
 
-local version = "1.1"
+local version = "1.12"
 local AUTOUPDATE = true
 local SCRIPT_NAME = "tMalzahar"
 local SOURCELIB_URL = "https://raw.github.com/TheRealSource/public/master/common/SourceLib.lua"
@@ -58,7 +58,7 @@ function OnLoad()
   Variables()
   EnemyMinions = minionManager(MINION_ENEMY, 800, myHero, MINION_SORT_HEALTH_ASC)
   ts = TargetSelector(TARGET_LESS_CAST, 850, DAMAGE_MAGIC)
-  UpdateWeb(true, ScriptName, id, HWID)
+  --UpdateWeb(true, ScriptName, id, HWID)
 
 end
 
@@ -478,11 +478,11 @@ function OnSendPacket(packet)
 end
 
 function OnBugsplat()
-  UpdateWeb(false, ScriptName, id, HWID)
+  --UpdateWeb(false, ScriptName, id, HWID)
 end
 
 function OnUnload()
-  UpdateWeb(false, ScriptName, id, HWID)
+  --UpdateWeb(false, ScriptName, id, HWID)
 end
 
 
