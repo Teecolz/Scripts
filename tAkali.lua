@@ -1,3 +1,6 @@
+-- Continuation of tAkali by Jarvis101
+
+
 if myHero.charName ~= "Akali" then return end
 
 
