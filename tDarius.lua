@@ -2,7 +2,7 @@ if myHero.charName ~= "Darius" then return end
 
 --[AUTOUPDATER]--
 
-local version = "1.73"
+local version = "1.74"
 local AUTOUPDATE = true
 local SCRIPT_NAME = "tDarius"
 local SOURCELIB_URL = "https://raw.github.com/TheRealSource/public/master/common/SourceLib.lua"
@@ -92,7 +92,7 @@ function OnLoad()
   iSOW:RegisterOnAttackCallback(Wreset)
   JungVariables()
   EnemyMinions = minionManager(MINION_ENEMY, 425, myHero, MINION_SORT_HEALTH_ASC)
-  UpdateWeb(true, ScriptName, id, HWID)
+  --UpdateWeb(true, ScriptName, id, HWID)
   
   for i, enemy in pairs(GetEnemyHeroes()) do
     if enemy then 
@@ -677,9 +677,9 @@ function UnitAtTower(unit,offset)
 end
 
 function OnBugsplat()
-  UpdateWeb(false, ScriptName, id, HWID)
+  --UpdateWeb(false, ScriptName, id, HWID)
 end
 
 function OnUnload()
-  UpdateWeb(false, ScriptName, id, HWID)
+  --UpdateWeb(false, ScriptName, id, HWID)
 end
