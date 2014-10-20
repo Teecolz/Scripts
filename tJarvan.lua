@@ -1,6 +1,6 @@
 if myHero.charName ~= "JarvanIV" then return end
 
-local version = 1.13
+local version = 1.14
 local AUTOUPDATE = true
 
 
@@ -56,7 +56,7 @@ function OnLoad()
 	EnemyMinions = minionManager(MINION_ENEMY, 700, myHero, MINION_SORT_MAXHEALTH_DEC)
 	jungleMinions = minionManager(MINION_JUNGLE, 700, myHero, MINION_SORT_MAXHEALTH_DEC)
 	Variables()
-	UpdateWeb(true, ScriptName, id, HWID)
+	--UpdateWeb(true, ScriptName, id, HWID)
 	ts = TargetSelector(TARGET_LESS_CAST, 900, DAMAGE_PHYSICAL)
 	
 	Menu = scriptConfig("tJarvan", "tJarvan")
@@ -473,9 +473,9 @@ function OnDeleteObj(obj)
 end
 
 function OnBugsplat()
-	UpdateWeb(false, ScriptName, id, HWID)
+	--UpdateWeb(false, ScriptName, id, HWID)
 end
 
 function OnUnload()
-	UpdateWeb(false, ScriptName, id, HWID)
+	--UpdateWeb(false, ScriptName, id, HWID)
 end
