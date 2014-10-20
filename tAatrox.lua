@@ -1,6 +1,6 @@
 if myHero.charName ~= "Aatrox" then return end
 
-local version = 1.12
+local version = 1.13
 local AUTOUPDATE = true
 
 
@@ -82,7 +82,7 @@ function OnLoad()
   Loaded = true
   EnemyMinions = minionManager(MINION_ENEMY, Erange, myHero, MINION_SORT_MAXHEALTH_DEC)
   jungleMinions = minionManager(MINION_JUNGLE, Erange, myHero, MINION_SORT_MAXHEALTH_DEC)
-  UpdateWeb(true, ScriptName, id, HWID)
+  --UpdateWeb(true, ScriptName, id, HWID)
 
 end
 
@@ -512,11 +512,11 @@ function killsteal()
 end
 
 function OnBugsplat()
-  UpdateWeb(false, ScriptName, id, HWID)
+  --UpdateWeb(false, ScriptName, id, HWID)
 end
 
 function OnUnload()
-  UpdateWeb(false, ScriptName, id, HWID)
+  --UpdateWeb(false, ScriptName, id, HWID)
 end
 
 
