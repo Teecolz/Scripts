@@ -1,6 +1,6 @@
 if myHero.charName ~= "Nasus" then return end
 
-local version = 1.12
+local version = 1.13
 local AUTOUPDATE = true
 
 require "SOW"
@@ -176,7 +176,7 @@ function OnLoad()
     
     print("<font color=\"#0DF8FF\">tNasus Loaded Successfully</font> ")
 
-    UpdateWeb(true, ScriptName, id, HWID)
+    --UpdateWeb(true, ScriptName, id, HWID)
     
 
 end
@@ -636,11 +636,11 @@ function packetAttack(enemy)
 end
 
 function OnBugsplat()
-  UpdateWeb(false, ScriptName, id, HWID)
+  --UpdateWeb(false, ScriptName, id, HWID)
 end
 
 function OnUnload()
-  UpdateWeb(false, ScriptName, id, HWID)
+  --UpdateWeb(false, ScriptName, id, HWID)
 end
 
 function UnitAtTower(unit,offset)
