@@ -4,7 +4,7 @@ require 'VPrediction'
 require 'Prodiction'
 require 'SOW'
 
-local version = 1.0
+local version = 1.1
 local AUTOUPDATE = true
 
 
@@ -53,7 +53,7 @@ local Qready, Wready, Eready, Rready = false
 local WActive = false
 
 function OnLoad()
-    UpdateWeb(true, ScriptName, id, HWID)
+    --UpdateWeb(true, ScriptName, id, HWID)
     jungleMinions = minionManager(MINION_JUNGLE, Qrange, myHero, MINION_SORT_MAXHEALTH_DEC)
     EnemyMinions = minionManager(MINION_ENEMY, Qrange, myHero, MINION_SORT_MAXHEALTH_DEC)
     print("<font color=\"#78CCDB\"><b>" ..">> tMundo has been loaded")
@@ -374,11 +374,11 @@ function OnDraw()
 end
 
 function OnBugsplat()
-    UpdateWeb(false, ScriptName, id, HWID)
+    --UpdateWeb(false, ScriptName, id, HWID)
 end
 
 function OnUnload()
-    UpdateWeb(false, ScriptName, id, HWID)
+    --UpdateWeb(false, ScriptName, id, HWID)
 end
 
 function SkinHack()
