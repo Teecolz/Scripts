@@ -259,12 +259,12 @@ function UseQ()
   for i, target in pairs(GetEnemyHeroes()) do
     if menu.extra.prediction then
          local pos, info = Prodiction.GetCircularAOEPrediction(target, Qrange, Qspeed, Qdelay, Qwidth)
-         if pos and GetDistance(pos) < Qrange and info.hitchance >= 2 then
+         if pos and not target.dead and GetDistance(pos) < Qrange and info.hitchance >= 2 then
               CastSpell(_Q, pos.x, pos.z)       
          end
     else
           local AOECastPosition, MainTargetHitChance, nTargets = VP:GetCircularAOECastPosition(target, Qdelay, Qwidth, Qrange, Qspeed, myHero)
-          if AOECastPosition and GetDistance(AOECastPosition) < Qrange and MainTargetHitChance >= 2 and nTargets >= 1 then
+          if AOECastPosition and not target.dead and GetDistance(AOECastPosition) < Qrange and MainTargetHitChance >= 2 and nTargets >= 1 then
             CastSpell(_Q, AOECastPosition.x, AOECastPosition.z)
           end
     end
@@ -276,13 +276,13 @@ function UseE()
     if menu.extra.prediction then
          local pos, info = Prodiction.GetLineAOEPrediction(target, Erange, Espeed, Edelay, Ewidth)
          if pos and info.hitchance >= 2 then
-              if target ~= nil and Eready and GetDistance(pos) < Erange then
+              if target ~= nil and not target.dead and Eready and GetDistance(pos) < Erange then
                   CastSpell(_E, pos.x, pos.z)
               end
          end
     else
           local AOECastPosition, MainTargetHitChance, nTargets = VP:GetLineAOECastPosition(target, Edelay, Ewidth, Erange, Espeed, myHero)
-          if AOECastPosition and GetDistance(AOECastPosition) < Erange and MainTargetHitChance >= 2 and nTargets >= 1 then
+          if AOECastPosition and not target.dead and GetDistance(AOECastPosition) < Erange and MainTargetHitChance >= 2 and nTargets >= 1 then
             CastSpell(_E, AOECastPosition.x, AOECastPosition.z)
           end
     end
