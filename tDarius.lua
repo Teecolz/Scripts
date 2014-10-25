@@ -1,7 +1,7 @@
 if myHero.charName ~= "Darius" then return end
 
 local version = "2.0"
-local AUTOUPDATE = false
+local AUTOUPDATE = true
 local SCRIPT_NAME = "tDarius"
 local SOURCELIB_URL = "https://raw.github.com/TheRealSource/public/master/common/SourceLib.lua"
 local SOURCELIB_PATH = LIB_PATH.."SourceLib.lua"
