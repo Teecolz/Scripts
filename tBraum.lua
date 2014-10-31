@@ -373,6 +373,7 @@ local rSpeed = 1438
 local rDelay = 510
 local menu
 local ts
+local levelSequence = {1,3,2,1,1,4,1,3,1,3,4,3,2,3,2,4,2,2}
 
 function OnLoad()
 	VP = VPrediction()
@@ -458,7 +459,7 @@ function menu()
 	menu.draw.LFC:addParam("CLinfo", "Higher length = Lower FPS Drops", SCRIPT_PARAM_INFO, "")
 	
 	menu:addSubMenu("tBraum: Extras", "extra")
-	--menu.extra:addParam("autolevel", "AutoLevel Spells (Requires F9)", SCRIPT_PARAM_ONOFF, false)
+	menu.extra:addParam("autolevel", "AutoLevel Spells (Requires F9)", SCRIPT_PARAM_ONOFF, false)
 	--menu.extra:addParam("interrupt", "Interrupt Important Spells with R", SCRIPT_PARAM_ONOFF, true)
 	menu.extra:addParam("packets", "Use Packets to Cast Spells", SCRIPT_PARAM_ONOFF, false)
 	menu.extra:addParam("prediction", "Prodiction = ON, VPred = Off", SCRIPT_PARAM_ONOFF, false)
@@ -504,6 +505,10 @@ function OnTick()
 
 	if menu.combo.wSettings.saveAlly and WReady then
 		SaveAlly()
+	end
+
+	if menu.extra.autolevel then
+		autoLevelSetSequence(levelSequence)
 	end
 	
 	--[[if menu.LaneClear then
